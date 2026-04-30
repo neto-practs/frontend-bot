@@ -1,0 +1,13 @@
+"He actualizado mi backend para que gestione la memoria de forma estricta. Necesito que revises mis archivos de lógica de chat (ej: @src/hooks/useChat.js o @src/components/Chat.js) para asegurar que todo encaje.
+
+PUNTOS A REVISAR:
+
+Persistencia del Contexto: ¿Estamos guardando el campo nuevoContexto que devuelve el backend en cada respuesta? (Debería guardarse en un estado o en localStorage).
+
+Envío del Contexto: Al enviar un nuevo mensaje, ¿estamos mandando ese contextoAnterior en el cuerpo de la petición (body) hacia el backend?
+
+Renderizado de Piezas: El backend ahora devuelve un objeto piezas (un array). ¿El frontend está preparado para mapear ese array y mostrar las tarjetas de los recambios correctamente?
+
+Limpieza: ¿Hay alguna lógica de 'limpieza de memoria' en el frontend que pueda estar chocando con la nueva lógica del backend?
+
+Toma como referencia que el backend ahora espera y devuelve el contexto como un STRING de JSON. Dime si ves algún fallo de sincronización."

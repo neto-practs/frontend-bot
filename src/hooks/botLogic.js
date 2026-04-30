@@ -1,0 +1,115 @@
+import { useRef } from "react";
+import { API_KEY, API_URL, PIEZAS_KEY, CONTEXT_KEY } from "../chatbot.config";
+
+/**
+ * Realiza la petición POST al backend del Chatbot.
+ *
+ * @param {string} userInput - El texto que el usuario ha introducido en el chat.
+ * @param {string} contextoAnterior - La memoria de la conversación anterior.
+ * @returns {Promise<Object>} La respuesta JSON procesada del servidor.
+ * @throws {Error} Si la conexión falla o el servidor devuelve un status != 200.
+ */
+const fetchBotResponse = async (userInput, contextoAnterior) => {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api-key": API_KEY,
+    },
+    body: JSON.stringify({ message: userInput, contexto: contextoAnterior }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || "Conexión rechazada por el servidor");
+  }
+
+  return response.json();
+};
+
+/**
+ * Helper: Recupera el historial de piezas de la sesión anterior.
+ * @returns {Object} Un mapa clave-valor con las búsquedas y sus piezas asociadas.
+ */
+const getInitialHistorial = () => {
+  try {
+    const saved = localStorage.getItem(PIEZAS_KEY);
+    return saved ? JSON.parse(saved) : {};
+  } catch (error) {
+    console.warn(
+      "[ChatBot] El historial de piezas no se pudo leer. Iniciando limpio.",
+    );
+    return {};
+  }
+};
+
+/**
+ * Maneja la lógica de negocio: llamadas a red, persistencia
+ * de resultados y gestión de estados de error/stock/memoria.
+ *
+ * @returns {Object} Funciones `handleBotMessage` y `getPiezas` para usar en la UI.
+ */
+export const useBotLogic = () => {
+  // Usamos useRef para guardar las piezas en memoria sin provocar re-renderizados en la interfaz
+  const historialPiezas = useRef(getInitialHistorial());
+  const contextoRef = useRef(localStorage.getItem(CONTEXT_KEY) || "");
+
+  /**
+   * Procesa el mensaje del usuario y devuelve la respuesta en texto para la UI.
+   * Almacena tanto las piezas como la metadata en el historial
+   *
+   * @param {Object} params - Parámetros inyectados por react-chatbotify.
+   * @param {Object} wpConfig - Objeto de configuración de WordPress.
+   * @returns {Promise<string>} La burbuja de texto que el bot debe mostrar.
+   */
+  // Busca la función handleBotMessage en botLogic.js y actualízala así:
+
+const handleBotMessage = async (params, wpConfig) => {
+  try {
+    const data = await fetchBotResponse(params.userInput, contextoRef.current);
+
+    if (data.nuevoContexto !== undefined) {
+      contextoRef.current = data.nuevoContexto;
+      data.nuevoContexto === "" 
+        ? localStorage.removeItem(CONTEXT_KEY) 
+        : localStorage.setItem(CONTEXT_KEY, data.nuevoContexto);
+    }
+    
+    // Si la IA devuelve una query limpia, la usamos como llave. Si no, el input del usuario.
+    const llaveMemoria = data.metadata?.queryLimpia || params.userInput;
+
+    historialPiezas.current[llaveMemoria] = {
+      piezas: data.piezas || [],
+      metadata: data.metadata || null,
+    };
+
+    localStorage.setItem(PIEZAS_KEY, JSON.stringify(historialPiezas.current));
+
+    if (data.respuesta === "ERR_NO_STOCK") {
+      return wpConfig.mensajeSinStock || "No hay stock actualmente.";
+    }
+
+    // Devolvemos la respuesta y la llave para que el Widget sepa qué piezas pintar
+    return { 
+      texto: data.respuesta, 
+      llave: llaveMemoria,
+      hasPiezas: data.piezas?.length > 0 
+    };
+  } catch (error) {
+    console.error("[ChatBot] Error:", error.message);
+    return "Error de conexión.";
+  }
+};
+
+  /**
+   * Recupera de la caché las piezas asociadas a una búsqueda específica.
+   *
+   * @param {string} userInput - La palabra clave a buscar en la caché.
+   * @returns {Object} Array de piezas, o vacío si no hay coincidencias.
+   */
+  const getPiezas = (userInput) => {
+    return historialPiezas.current[userInput] || { piezas: [], metadata: null };
+  };
+
+  return { handleBotMessage, getPiezas };
+};

@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------
+   AVATARES DEL BOT Y ALINEACIÓN
+--------------------------------------------------- */
+.rcb-message-bot-avatar {
+  width: 35px !important;
+  height: 35px !important;
+  border-radius: 50% !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  aspect-ratio: 1 / 1 !important;
+  flex-shrink: 0 !important;
+  border: 1px solid #e4e6eb !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.rcb-bot-message-container {
+  align-items: flex-start !important;
+  flex-wrap: wrap !important; /* Salva la vida del avatar */
+}
+
+.rcb-user-message-container {
+  align-items: flex-end !important;
+}
+
+/* ---------------------------------------------------
+   AJUSTE RESPONSIVE DEL BOTÓN FLOTANTE
+--------------------------------------------------- */
+/* Móviles */
+.rcb-toggle-button {
+  width: 60px !important;
+  height: 60px !important;
+  bottom: 20px !important;
+  right: 15px !important;
+}
+
+/* Tablets e iPads */
+@media (min-width: 768px) {
+  .rcb-toggle-button {
+    width: 76px !important;
+    height: 76px !important;
+    bottom: 25px !important;
+    right: 25px !important;
+  }
+}
+
+/* Escritorio */
+@media (min-width: 1024px) {
+  .rcb-toggle-button {
+    width: 88px !important;
+    height: 88px !important;
+    bottom: 30px !important;
+    right: 30px !important;
+  }
+}
+
+.rcb-toggle-button img,
+.rcb-toggle-button svg {
+  width: 90% !important;
+  height: 90% !important;
+  object-fit: cover !important;
+  border-radius: 50%;
+}
+
+/* ---------------------------------------------------
+   AJUSTE DE LA NOTIFICACIÓN ROJA
+--------------------------------------------------- */
+.rcb-badge {
+  width: 22px !important;
+  height: 22px !important;
+  font-size: 14px !important;
+  top: -8px !important;
+  right: -8px !important;
+}
+
+@media (min-width: 768px) {
+  .rcb-badge {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 16px !important;
+    top: -8px !important;
+    right: -8px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .rcb-badge {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 22px !important;
+    top: -10px !important;
+    right: -10px !important;
+  }
+}
+
+/* ---------------------------------------------------
+   AJUSTE DE LA VENTANA (FULLSCREEN SOLO EN MÓVIL)
+--------------------------------------------------- */
+@media (max-width: 767px) {
+  .rcb-chat-window {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-width: 100vw !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+}
+
+/* ---------------------------------------------------
+   ESTILOS DE LOS BOTONES DE OPCIONES (Dinámicos para WP)
+--------------------------------------------------- */
+.rcb-options {
+  display: flex !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  margin-top: 10px !important;
+}
+
+.rcb-options .rcb-option {
+  background-color: var(--opt-bg, #ffffff) !important;
+  color: var(--opt-color, #333333) !important;
+  border: 1.5px solid var(--opt-border, #e5e7eb) !important;
+  border-radius: 20px !important;
+  padding: 8px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.rcb-options .rcb-option:hover {
+  background-color: var(--opt-hover-bg, #f3f4f6) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ---------------------------------------------------
+   BLOQUEO DE BOTONES ANTIGUOS
+--------------------------------------------------- */
+.rcb-bot-message-container:has(~ .rcb-user-message-container) .rcb-options,
+.rcb-bot-message-container:has(~ .rcb-bot-message-container) .rcb-options,
+.rcb-options:has(~ .rcb-user-message-container),
+.rcb-options:has(~ .rcb-bot-message-container),
+div:has(~ .rcb-user-message-container) > .rcb-options {
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+  filter: grayscale(100%) !important;
+  cursor: not-allowed !important;
+}
