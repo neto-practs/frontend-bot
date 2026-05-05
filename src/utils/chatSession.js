@@ -15,20 +15,31 @@ const MS_POR_HORA = 1000 * 60 * 60;
  */
 export const gestionarSesionChat = () => {
   const ahora = Date.now();
-  const inicioSesion = localStorage.getItem(SESSION_KEY);
+  const ultimaActividad = localStorage.getItem(SESSION_KEY);
 
   // Si es la primera vez, guardamos la sesión y salimos
-  if (!inicioSesion) {
+  if (!ultimaActividad) {
     localStorage.setItem(SESSION_KEY, ahora.toString());
     return;
   }
 
-  const horasTranscurridas = (ahora - parseInt(inicioSesion, 10)) / MS_POR_HORA;
+  const horasTranscurridas =
+    (ahora - parseInt(ultimaActividad, 10)) / MS_POR_HORA;
 
   if (horasTranscurridas >= HORAS_CADUCIDAD) {
+    //  1. BORRAMOS TODO el LocalStorage
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(PIEZAS_KEY);
     localStorage.removeItem(CONTEXT_KEY);
+
+    localStorage.removeItem("NFW_LAST_SEARCH");
+    localStorage.removeItem("NFW_IS_LOCKED");
+
+    // Reiniciamos el temporizador
+    localStorage.setItem(SESSION_KEY, ahora.toString());
+  } else {
+    // Renovamos el contador si NO ha caducado.
+    // Así el temporizador de 8 horas se reinicia con cada visita/recarga de la página.
     localStorage.setItem(SESSION_KEY, ahora.toString());
   }
 };

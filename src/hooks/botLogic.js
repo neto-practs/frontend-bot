@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { API_KEY, API_URL, PIEZAS_KEY, CONTEXT_KEY } from "../chatbot.config";
+import { gestionarSesionChat } from "../utils/chatSession";
 
 /**
  * Realiza la petición POST al backend del Chatbot.
@@ -28,7 +29,7 @@ const fetchBotResponse = async (userInput, contextoAnterior) => {
 };
 
 /**
- * Helper: Recupera el historial de piezas de la sesión anterior.
+ * Helper: Recupera el historial de piezas de la sesión actual (o vacío si caducó).
  * @returns {Object} Un mapa clave-valor con las búsquedas y sus piezas asociadas.
  */
 const getInitialHistorial = () => {
@@ -50,56 +51,61 @@ const getInitialHistorial = () => {
  * @returns {Object} Funciones `handleBotMessage` y `getPiezas` para usar en la UI.
  */
 export const useBotLogic = () => {
-  // Usamos useRef para guardar las piezas en memoria sin provocar re-renderizados en la interfaz
-  const historialPiezas = useRef(getInitialHistorial());
-  const contextoRef = useRef(localStorage.getItem(CONTEXT_KEY) || "");
+  const historialPiezas = useRef({});
+  const contextoRef = useRef("");
 
   /**
    * Procesa el mensaje del usuario y devuelve la respuesta en texto para la UI.
-   * Almacena tanto las piezas como la metadata en el historial
+   * Almacena tanto las piezas como la metadata en el historial.
    *
    * @param {Object} params - Parámetros inyectados por react-chatbotify.
    * @param {Object} wpConfig - Objeto de configuración de WordPress.
-   * @returns {Promise<string>} La burbuja de texto que el bot debe mostrar.
+   * @returns {Promise<Object|string>} La respuesta que el bot debe mostrar.
    */
-  // Busca la función handleBotMessage en botLogic.js y actualízala así:
+  const handleBotMessage = async (params, wpConfig) => {
+    try {
+      // 1. Comprobamos el tiempo antes de hacer NADA.
+      gestionarSesionChat();
 
-const handleBotMessage = async (params, wpConfig) => {
-  try {
-    const data = await fetchBotResponse(params.userInput, contextoRef.current);
+      // 2. Leemos la memoria limpia (después de que el limpiador haya pasado la escoba si hacía falta)
+      historialPiezas.current = getInitialHistorial();
+      contextoRef.current = localStorage.getItem(CONTEXT_KEY) || "";
 
-    if (data.nuevoContexto !== undefined) {
-      contextoRef.current = data.nuevoContexto;
-      data.nuevoContexto === "" 
-        ? localStorage.removeItem(CONTEXT_KEY) 
-        : localStorage.setItem(CONTEXT_KEY, data.nuevoContexto);
+      // 3. Enviamos la petición al servidor
+      const data = await fetchBotResponse(params.userInput, contextoRef.current);
+
+      if (data.nuevoContexto !== undefined) {
+        contextoRef.current = data.nuevoContexto;
+        data.nuevoContexto === ""
+          ? localStorage.removeItem(CONTEXT_KEY)
+          : localStorage.setItem(CONTEXT_KEY, data.nuevoContexto);
+      }
+
+      // Si la IA devuelve una query limpia, la usamos como llave. Si no, el input del usuario.
+      const llaveMemoria = data.metadata?.queryLimpia || params.userInput;
+
+      historialPiezas.current[llaveMemoria] = {
+        piezas: data.piezas || [],
+        metadata: data.metadata || null,
+      };
+
+      localStorage.setItem(PIEZAS_KEY, JSON.stringify(historialPiezas.current));
+
+      if (data.respuesta === "ERR_NO_STOCK") {
+        return wpConfig.mensajeSinStock || "No hay stock actualmente.";
+      }
+
+      // Devolvemos la respuesta y la llave para que el Widget sepa qué piezas pintar
+      return {
+        texto: data.respuesta,
+        llave: llaveMemoria,
+        hasPiezas: data.piezas?.length > 0,
+      };
+    } catch (error) {
+      console.error("[ChatBot] Error:", error.message);
+      return "Error de conexión.";
     }
-    
-    // Si la IA devuelve una query limpia, la usamos como llave. Si no, el input del usuario.
-    const llaveMemoria = data.metadata?.queryLimpia || params.userInput;
-
-    historialPiezas.current[llaveMemoria] = {
-      piezas: data.piezas || [],
-      metadata: data.metadata || null,
-    };
-
-    localStorage.setItem(PIEZAS_KEY, JSON.stringify(historialPiezas.current));
-
-    if (data.respuesta === "ERR_NO_STOCK") {
-      return wpConfig.mensajeSinStock || "No hay stock actualmente.";
-    }
-
-    // Devolvemos la respuesta y la llave para que el Widget sepa qué piezas pintar
-    return { 
-      texto: data.respuesta, 
-      llave: llaveMemoria,
-      hasPiezas: data.piezas?.length > 0 
-    };
-  } catch (error) {
-    console.error("[ChatBot] Error:", error.message);
-    return "Error de conexión.";
-  }
-};
+  };
 
   /**
    * Recupera de la caché las piezas asociadas a una búsqueda específica.
@@ -108,7 +114,9 @@ const handleBotMessage = async (params, wpConfig) => {
    * @returns {Object} Array de piezas, o vacío si no hay coincidencias.
    */
   const getPiezas = (userInput) => {
-    return historialPiezas.current[userInput] || { piezas: [], metadata: null };
+    // Siempre intentamos leer el último estado (por si acaso el limpiador ha actuado)
+    const currentHistorial = getInitialHistorial();
+    return currentHistorial[userInput] || { piezas: [], metadata: null };
   };
 
   return { handleBotMessage, getPiezas };

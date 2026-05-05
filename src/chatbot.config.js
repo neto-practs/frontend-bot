@@ -43,6 +43,7 @@ export const buildConfig = (wp = {}) => {
     inputBorderColor: wp.inputBorderColor || "#eeeeee",
     badgeBg: wp.badgeBg || "red",
     chatBodyBg: wp.chatBodyBg || "#f9f9f9",
+    chatSize: wp.chatSize || "medium", 
   };
 };
 
@@ -50,115 +51,129 @@ export const buildConfig = (wp = {}) => {
  * ESTILOS VISUALES
  * Define los estilos que inyectaremos en la librería.
  */
-export const buildStyles = (config, isMobile) => ({
-  headerStyle: {
-    background: config.primary,
-    color: config.headerTitleColor,
-    fontSize: "16px",
-    padding: "18px",
-    fontWeight: "600",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  bodyStyle: {
-    backgroundColor: config.chatBodyBg,
-    flex: "1",
-    overflowY: "auto",
-  },
-  userBubbleStyle: {
-    backgroundColor: config.userBubbleBg,
-    color: config.userTextColor,
-    borderRadius: "15px 15px 2px 15px",
-    padding: "12px",
-    maxWidth: "80%",
-    wordBreak: "break-word",
-  },
-  botBubbleStyle: {
-    backgroundColor: config.botBubbleBg,
-    color: config.botTextColor,
-    borderRadius: "15px 15px 15px 2px",
-    padding: "12px",
-    maxWidth: "80%",
-    wordBreak: "break-word",
-  },
-  chatInputContainerStyle: {
-    backgroundColor: config.inputContainerBg,
-    padding: "10px",
-    borderTop: `1px solid ${config.inputBorderColor}`,
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  },
-  chatInputAreaStyle: {
-    backgroundColor: config.inputBoxBg,
-    height: "44px",
-    minHeight: "44px",
-    borderRadius: "22px",
-    fontSize: "15px",
-    paddingLeft: "16px",
-    paddingRight: "16px",
-    flex: "1",
-    boxSizing: "border-box",
-  },
-  chatInputAreaFocusedStyle: {
-    border: `1.5px solid ${config.inputFocusBorder}`,
-    outline: "none",
-    boxShadow: "none",
-  },
-  sendButtonStyle: {
-    opacity: "0",
-    position: "absolute",
-    width: "1px",
-    height: "1px",
-    overflow: "hidden",
-  },
-  closeChatIconStyle: {
-    fill: config.headerTitleColor,
-    width: "25px",
-    height: "25px",
-  },
-  notificationBadgeStyle: { background: config.badgeBg, color: "#fff" },
+export const buildStyles = (config, isMobile) => {
+  // Lógica de tamaño dinámico para escritorio
+  let desktopWidth = "300px";
+  let desktopHeight = "min(600px, 85vh)"; // Tamaño "medium" por defecto
 
-  // Desactivamos elementos redundantes
-  notificationButtonStyle: { display: "none" },
-  audioButtonStyle: { display: "none" },
-  footerStyle: { display: "none", padding: 0, margin: 0, height: 0 },
+  if (config.chatSize === "small") {
+    desktopWidth = "280px";
+    desktopHeight = "min(500px, 80vh)";
+  } else if (config.chatSize === "large") {
+    desktopWidth = "360px";
+    desktopHeight = "min(720px, 90vh)";
+  }
 
-  botBubbleAvatarStyle: {
-    width: "36px",
-    height: "36px",
-    borderRadius: "50%",
-    objectFit: "cover",
-  },
-  chatButtonStyle: {
-    background: config.launcherIcon ? "transparent" : config.launcherBg,
-    boxShadow: config.launcherIcon ? "none" : "0 4px 12px rgba(0,0,0,0.3)",
-    zIndex: MAX_Z_INDEX,
-  },
-  chatWindowStyle: {
-    zIndex: MAX_Z_INDEX,
-    display: "flex",
-    flexDirection: "column",
-    ...(isMobile
-      ? {
-          inset: 0,
-          width: "100vw",
-          height: "100dvh",
-          maxWidth: "100vw",
-          maxHeight: "100dvh",
-          borderRadius: 0,
-        }
-      : {
-          bottom: "10px",
-          right: "20px",
-          width: "300px",
-          height: "min(600px, 85vh)",
-          borderRadius: "16px",
-          boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
-        }),
-  },
-});
+  return {
+    headerStyle: {
+      background: config.primary,
+      color: config.headerTitleColor,
+      fontSize: "16px",
+      padding: "18px",
+      fontWeight: "600",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+    },
+    bodyStyle: {
+      backgroundColor: config.chatBodyBg,
+      flex: "1",
+      overflowY: "auto",
+    },
+    userBubbleStyle: {
+      backgroundColor: config.userBubbleBg,
+      color: config.userTextColor,
+      borderRadius: "15px 15px 2px 15px",
+      padding: "12px",
+      maxWidth: "80%",
+      wordBreak: "break-word",
+    },
+    botBubbleStyle: {
+      backgroundColor: config.botBubbleBg,
+      color: config.botTextColor,
+      borderRadius: "15px 15px 15px 2px",
+      padding: "12px",
+      maxWidth: "80%",
+      wordBreak: "break-word",
+    },
+    chatInputContainerStyle: {
+      backgroundColor: config.inputContainerBg,
+      padding: "10px",
+      borderTop: `1px solid ${config.inputBorderColor}`,
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+    },
+    chatInputAreaStyle: {
+      backgroundColor: config.inputBoxBg,
+      height: "44px",
+      minHeight: "44px",
+      borderRadius: "22px",
+      fontSize: "15px",
+      paddingLeft: "16px",
+      paddingRight: "16px",
+      flex: "1",
+      boxSizing: "border-box",
+    },
+    chatInputAreaFocusedStyle: {
+      border: `1.5px solid ${config.inputFocusBorder}`,
+      outline: "none",
+      boxShadow: "none",
+    },
+    sendButtonStyle: {
+      opacity: "0",
+      position: "absolute",
+      width: "1px",
+      height: "1px",
+      overflow: "hidden",
+    },
+    closeChatIconStyle: {
+      fill: config.headerTitleColor,
+      width: "25px",
+      height: "25px",
+    },
+    notificationBadgeStyle: { background: config.badgeBg, color: "#fff" },
+
+    // Desactivamos elementos redundantes
+    notificationButtonStyle: { display: "none" },
+    audioButtonStyle: { display: "none" },
+    footerStyle: { display: "none", padding: 0, margin: 0, height: 0 },
+
+    botBubbleAvatarStyle: {
+      width: "36px",
+      height: "36px",
+      borderRadius: "50%",
+      objectFit: "cover",
+    },
+    chatButtonStyle: {
+      background: config.launcherIcon ? "transparent" : config.launcherBg,
+      boxShadow: config.launcherIcon ? "none" : "0 4px 12px rgba(0,0,0,0.3)",
+      zIndex: MAX_Z_INDEX,
+    },
+    chatWindowStyle: {
+      zIndex: MAX_Z_INDEX,
+      display: "flex",
+      flexDirection: "column",
+      ...(isMobile
+        ? {
+            inset: 0,
+            width: "100vw",
+            height: "100dvh",
+            maxWidth: "100vw",
+            maxHeight: "100dvh",
+            borderRadius: 0,
+          }
+        : {
+            bottom: "10px",
+            right: "20px",
+            width: desktopWidth,       // <--- Variable asignada dinámicamente
+            height: desktopHeight,     // <--- Variable asignada dinámicamente
+            borderRadius: "16px",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+          }),
+    },
+  };
+};
 
 /**
  * AJUSTES FUNCIONALES

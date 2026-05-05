@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Floating Widget
  * Description: Agente de búsqueda conversacional configurable desde WordPress.
- * Version: 3.5
+ * Version: 3.6
  * Author: Saul
  */
 
@@ -90,7 +90,7 @@ function nfw_settings_init() {
             return; 
         }
 
-        // 🛑 NUEVO: Registramos usando nuestra función de sanitización
+        // Registramos usando nuestra función de sanitización
         register_setting('nfw_options_group', 'nfw_settings', 'nfw_sanitize_settings');
 
         // SECCIONES (Nombres intuitivos)
@@ -118,6 +118,14 @@ function nfw_settings_init() {
         nfw_add_field('botTextColor', 'Color del texto del Bot', 'color', 'nfw_section_bubbles', '#000000');
 
         nfw_add_field('chatBodyBg', 'Color del fondo general del chat (Detrás de los mensajes)', 'color', 'nfw_section_appearance', '#f9f9f9');
+        
+        // Selector de tamaño
+        nfw_add_field('chatSize', 'Tamaño de la ventana (Solo Ordenador)', 'select', 'nfw_section_appearance', 'medium', array(
+            'small' => 'Pequeño',
+            'medium' => 'Mediano (Actual / Por Defecto)',
+            'large' => 'Grande'
+        ));
+
         nfw_add_field('inputContainerBg', 'Color de la franja inferior (Donde van los botones)', 'color', 'nfw_section_appearance', '#ffffff');
         nfw_add_field('inputBorderColor', 'Color de la línea que separa los mensajes de la zona inferior', 'color', 'nfw_section_appearance', '#eeeeee');
         nfw_add_field('labelColor', 'Color del nombre del remitente (Letra pequeña sobre la burbuja)', 'color', 'nfw_section_appearance', '#65676b');
@@ -159,8 +167,8 @@ function nfw_section_images_desc() {
     echo '<button type="button" id="nfw-reset-images-btn" class="button button-secondary" style="color: #d63638; border-color: #d63638;">Restablecer imágenes por defecto</button>';
 }
 
-function nfw_add_field($id, $title, $type, $section, $default) {
-    add_settings_field($id, $title, 'nfw_render_field', 'nfw-config', $section, array('label_for' => $id, 'type' => $type, 'default' => $default));
+function nfw_add_field($id, $title, $type, $section, $default, $choices = array()) {
+    add_settings_field($id, $title, 'nfw_render_field', 'nfw-config', $section, array('label_for' => $id, 'type' => $type, 'default' => $default, 'choices' => $choices));
 }
 
 function nfw_render_field($args) {
@@ -171,6 +179,13 @@ function nfw_render_field($args) {
     
     if ($args['type'] === 'color') {
         echo '<input type="color" name="nfw_settings[' . $id . ']" value="' . esc_attr($value) . '">';
+    } elseif ($args['type'] === 'select') {
+        echo '<select name="nfw_settings[' . $id . ']">';
+        foreach ($args['choices'] as $val => $label) {
+            $selected = ($value === $val) ? 'selected="selected"' : '';
+            echo '<option value="' . esc_attr($val) . '" ' . $selected . '>' . esc_html($label) . '</option>';
+        }
+        echo '</select>';
     } elseif ($args['type'] === 'image') {
         echo '<div style="display: flex; align-items: flex-start; gap: 20px; background: #fff; padding: 15px; border: 1px solid #ccd0d4; border-radius: 4px;">';
             echo '<div style="text-align: center; width: 120px;">';
@@ -265,6 +280,7 @@ function nfw_load_files() {
                 'sendBtnBg'        => nfw_get_val($options, 'sendBtnBg', '#99c355'),
                 'badgeBg'          => nfw_get_val($options, 'badgeBg', '#ff0000'),
                 'chatBodyBg'       => nfw_get_val($options, 'chatBodyBg', '#f9f9f9'),
+                'chatSize'         => nfw_get_val($options, 'chatSize', 'medium'), // <--- SECCIÓN AÑADIDA
                 'inputContainerBg' => nfw_get_val($options, 'inputContainerBg', '#ffffff'),
                 'inputBorderColor' => nfw_get_val($options, 'inputBorderColor', '#eeeeee'),
                 'labelColor'       => nfw_get_val($options, 'labelColor', '#65676b'),
