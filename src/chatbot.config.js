@@ -190,6 +190,8 @@ export const buildSettings = (config, isMobile) => ({
   chatHistory: {
     storageKey: STORAGE_KEY,
     disabled: false,
+    autoLoad: true,
+    showChatHistory: true,
   },
   header: {
     title: config.headerTitleText,

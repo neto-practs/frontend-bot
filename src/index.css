@@ -14,11 +14,13 @@
   flex-shrink: 0 !important;
   border: 1px solid #e4e6eb !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  margin-top: 4px !important; /* Añadimos este margen para alinearlo con el nombre */
 }
 
 .rcb-bot-message-container {
-  align-items: flex-start !important;
-  flex-wrap: wrap !important; /* Salva la vida del avatar */
+  display: flex !important;
+  align-items: flex-start !important; /* Fuerza que el avatar se quede arriba */
+  flex-wrap: nowrap !important; /* Evita que el avatar se vaya a otra línea */
 }
 
 .rcb-user-message-container {

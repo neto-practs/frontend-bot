@@ -1,0 +1,19 @@
+ Cambios realizados:
+
+   1. Integración de Avatar y Nombre (chatLabels.js):
+       * He modificado crearEtiquetaNombre para que sea un contenedor flex. 
+       * Ahora, el logo (avatar) se inyecta directamente a la izquierda del nombre (SOPORTE) dentro de la misma etiqueta.
+       * Se han aplicado estilos para que el avatar sea circular, tenga un borde sutil y esté perfectamente alineado.
+
+   2. Reordenamiento de Inyección (useChatDOMInjector.jsx):
+       * He invertido el orden de ejecución: primero se procesan las etiquetas de nombres y luego se inyectan las piezas.
+       * El inyector ahora es "consciente" de la etiqueta de nombre. Si existe, inserta el grid de piezas debajo del nombre+foto, en lugar
+         de ponerlo por encima de todo. Esto crea la secuencia lógica: [Foto + Nombre] -> [Grid de Piezas] -> [Texto del Bot].
+
+   3. Limpieza de la Interfaz (index.css):
+       * He ocultado mediante CSS el avatar original de la librería (.rcb-message-bot-avatar) para evitar que aparezca duplicado al final
+         del mensaje.
+       * He ajustado el contenedor del mensaje para asegurar una alineación vertical limpia.
+
+  Con esta estructura, el diseño es mucho más profesional y sigue el flujo de lectura natural que pedías. La configuración de la imagen se
+  sigue tomando dinámicamente desde WordPress (headerAvatar).

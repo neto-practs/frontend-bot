@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import GridPiezas from "../components/Chat/GridPiezas";
 import {
@@ -7,83 +7,117 @@ import {
   procesarBurbujas,
 } from "../components/Chat/chatLabels";
 
+/**
+ * Custom hook para inyectar componentes React en el DOM del chat (RCB).
+ * Maneja la persistencia de los grids de piezas tras un F5 y el reordenamiento visual.
+ */
 export const useChatDOMInjector = (mounted, getPiezas, wp) => {
   const observerRef = useRef(null);
   const rootsRef = useRef(new Map());
+  const wpRef = useRef(wp);
 
+  // Sincronizamos wpRef para que el observer siempre use la última configuración
   useEffect(() => {
-    if (!mounted) return;
+    wpRef.current = wp;
+  }, [wp]);
 
-    let timer = null;
+  /**
+   * Procesa el DOM buscando marcadores de piezas e inyecta los componentes correspondientes.
+   */
+  const inyectarHistorico = useCallback(() => {
+    // Buscamos todas las burbujas del bot
+    const bubbles = document.querySelectorAll(".rcb-bot-message");
+    
+    bubbles.forEach((bubble) => {
+      const fullText = bubble.textContent?.trim() || "";
 
-    const ejecutarInyeccion = () => {
-      // ── 1. HISTORIAL: reconstruye grids al recargar página ──────────────────
-      // Al hacer F5, RCB restaura los mensajes con el marcador [[PIEZAS:keyword]]
-      // en vez del componente React (no serializable). Aquí los convertimos de vuelta.
-      document.querySelectorAll(".rcb-bot-message").forEach((bubble) => {
-        const text = bubble.textContent?.trim() || "";
-
-        // Ocultar burbujas corruptas
-        if (text === "[object Object]") {
-          bubble.style.display = "none";
-          return;
-        }
-
-        if (!text.includes("[[PIEZAS:")) return;
-
-        // Ocultamos la burbuja con el marcador — no queremos que el usuario lo vea
+      // 1. Limpieza de burbujas corruptas
+      if (fullText === "[object Object]") {
         bubble.style.display = "none";
-        if (bubble.dataset.piezasRendered) return;
+        return;
+      }
 
-        const match = text.match(/\[\[PIEZAS:(.*?)\]\]/);
-        if (!match) return;
+      // 2. Detección de marcador de piezas [[PIEZAS:keyword]]
+      if (!fullText.includes("[[PIEZAS:")) return;
 
-        const keyword = match[1].trim();
-        const resultado = getPiezas(keyword);
-        if (!resultado?.piezas?.length) return;
+      // GUARD CRÍTICO: Si este nodo ya fue procesado, no inyectamos más.
+      if (bubble.dataset.netoInjected === "true") return;
+      bubble.dataset.netoInjected = "true";
 
-        bubble.dataset.piezasRendered = "true";
+      // Ocultamos la burbuja original
+      bubble.style.display = "none";
 
-        const container = bubble.closest(".rcb-bot-message-container");
-        if (container) container.classList.add("es-grid-de-piezas");
+      const match = fullText.match(/\[\[PIEZAS:(.*?)\]\]/);
+      if (!match) return;
 
-        // Insertamos el grid justo antes del contenedor de la burbuja
-        const yaInyectado = container?.previousElementSibling?.classList.contains("neto-pieza-inyectada");
-        if (container && !yaInyectado) {
-          const cajaLimpia = document.createElement("div");
-          cajaLimpia.className = "neto-pieza-inyectada w-full mb-2";
-          container.parentNode.insertBefore(cajaLimpia, container);
+      const keyword = match[1].trim();
+      // Extraemos el texto del bot que viene después del marcador (si existe)
+      const botText = fullText.split("]]").slice(1).join("]]").trim();
 
-          const root = createRoot(cajaLimpia);
-          root.render(
-            <GridPiezas piezas={resultado.piezas} metadata={resultado.metadata} />,
-          );
-          rootsRef.current.set(cajaLimpia, root);
-        }
-      });
+      const resultado = getPiezas(keyword);
+      if (!resultado?.piezas?.length) return;
 
-      // ── 2. CHAT EN VIVO: sube el grid por encima del texto del bot ──────────
-      // RCB renderiza siempre: [texto bot] → [grid]
-      // Queremos:               [grid]     → [texto bot]
-      //
-      // Estrategia: cada grid busca su burbuja de texto hermana (siguiente o anterior)
-      // y si está por encima en el DOM, la movemos debajo del grid.
-      document.querySelectorAll(".neto-grid-vivo").forEach((grid) => {
-        const parent = grid.parentNode;
-        if (!parent) return;
+      const container = bubble.closest(".rcb-bot-message-container");
+      if (!container) return;
 
-        // Buscamos el contenedor de burbuja bot que está justo después del grid
-        let siguiente = grid.nextElementSibling;
-        while (siguiente && !siguiente.classList.contains("rcb-bot-message-container")) {
-          siguiente = siguiente.nextElementSibling;
-        }
+      // 3. Inyección del Grid de Piezas
+      // Verificamos si ya hay una caja inyectada justo antes para este contenedor
+      const yaInyectado = container.previousElementSibling?.classList.contains("neto-pieza-inyectada");
+      
+      if (!yaInyectado) {
+        const cajaLimpia = document.createElement("div");
+        cajaLimpia.className = "neto-pieza-inyectada w-full mb-2";
+        container.parentNode.insertBefore(cajaLimpia, container);
 
-        if (siguiente) {
-          // La burbuja ya está debajo → correcto, no tocamos nada
-          return;
-        }
+        const root = createRoot(cajaLimpia);
+        const { piezas, metadata } = resultado;
 
-        // La burbuja está ANTES del grid → la movemos justo después
+        root.render(
+          <div className="flex flex-col gap-2">
+            <GridPiezas piezas={piezas} metadata={metadata} wp={wpRef.current} />
+            {botText && (
+              <div 
+                className="rcb-bot-message" 
+                style={{
+                  backgroundColor: wpRef.current.botBubbleBg || "#f0f2f5",
+                  color: wpRef.current.botTextColor || "#000000",
+                  borderRadius: "15px 15px 15px 2px",
+                  padding: "12px",
+                  maxWidth: "80%",
+                  wordBreak: "break-word",
+                  fontSize: "14px",
+                  display: "inline-block",
+                  alignSelf: "flex-start"
+                }}
+              >
+                {botText}
+              </div>
+            )}
+          </div>
+        );
+
+        rootsRef.current.set(cajaLimpia, { root, piezas, metadata, botText });
+        container.classList.add("es-grid-de-piezas");
+      }
+    });
+  }, [getPiezas]);
+
+  /**
+   * Reordena los grids que el bot renderiza en vivo para que aparezcan sobre el texto.
+   */
+  const reordenarGridsVivos = useCallback(() => {
+    // Solo reordenamos si no estamos usando la inyección por marcadores 
+    // (pero como ahora todo irá por marcadores, esto es casi legado/seguridad)
+    document.querySelectorAll(".neto-grid-vivo").forEach((grid) => {
+      const parent = grid.parentNode;
+      if (!parent) return;
+
+      let siguiente = grid.nextElementSibling;
+      while (siguiente && !siguiente.classList.contains("rcb-bot-message-container")) {
+        siguiente = siguiente.nextElementSibling;
+      }
+      
+      if (!siguiente) {
         let anterior = grid.previousElementSibling;
         while (anterior && !anterior.classList.contains("rcb-bot-message-container")) {
           anterior = anterior.previousElementSibling;
@@ -91,19 +125,34 @@ export const useChatDOMInjector = (mounted, getPiezas, wp) => {
 
         if (anterior) {
           grid.classList.add("mb-2");
-          // Insertamos el grid ANTES de la burbuja (la burbuja queda debajo)
           anterior.parentNode.insertBefore(grid, anterior);
         }
-      });
+      }
+    });
+  }, []);
 
-      // ── 3. Etiquetas visuales y botón enviar ────────────────────────────────
-      limpiarEtiquetasHuerfanas();
-      inyectarBotonEnviar(wp.sendBtnBg || wp.headerBg || "#99c355");
-      procesarBurbujas(".rcb-bot-message", true, wp);
-      procesarBurbujas(".rcb-user-message", false, wp);
-    };
+  /**
+   * Lógica principal de ejecución del inyector
+   */
+  const ejecutarInyeccion = useCallback(() => {
+    if (!mounted) return;
 
-    // Debounce de 50ms — imperceptible para el usuario
+    inyectarHistorico();
+    reordenarGridsVivos();
+
+    // ── Etiquetas visuales y botón enviar ────────────────────────────────
+    limpiarEtiquetasHuerfanas();
+    const config = wpRef.current;
+    inyectarBotonEnviar(config.sendBtnBg || config.headerBg || "#99c355");
+    procesarBurbujas(".rcb-bot-message", true, config);
+    procesarBurbujas(".rcb-user-message", false, config);
+  }, [mounted, inyectarHistorico, reordenarGridsVivos]);
+
+  // EFECTO 1: MutationObserver + Ejecución inicial
+  useEffect(() => {
+    if (!mounted) return;
+
+    let timer = null;
     const programar = () => {
       clearTimeout(timer);
       timer = setTimeout(ejecutarInyeccion, 50);
@@ -111,14 +160,54 @@ export const useChatDOMInjector = (mounted, getPiezas, wp) => {
 
     observerRef.current = new MutationObserver(programar);
     observerRef.current.observe(document.body, { childList: true, subtree: true });
-    programar();
+    
+    // Ejecución inmediata para capturar lo ya existente al montar
+    ejecutarInyeccion();
 
     return () => {
       clearTimeout(timer);
       observerRef.current?.disconnect();
-      // Limpiamos los roots de React que hayamos creado manualmente
-      rootsRef.current.forEach((root) => root.unmount());
+    };
+  }, [mounted, ejecutarInyeccion]);
+
+  // EFECTO 2: Sincronización de estilos/configuraciones cuando 'wp' cambia
+  useEffect(() => {
+    if (!mounted || !wp) return;
+
+    rootsRef.current.forEach(({ root, piezas, metadata, botText }) => {
+      root.render(
+        <div className="flex flex-col gap-2">
+          <GridPiezas piezas={piezas} metadata={metadata} wp={wp} />
+          {botText && (
+            <div 
+              className="rcb-bot-message" 
+              style={{
+                backgroundColor: wp.botBubbleBg || "#f0f2f5",
+                color: wp.botTextColor || "#000000",
+                borderRadius: "15px 15px 15px 2px",
+                padding: "12px",
+                maxWidth: "80%",
+                wordBreak: "break-word",
+                fontSize: "14px",
+                display: "inline-block",
+                alignSelf: "flex-start"
+              }}
+            >
+              {botText}
+            </div>
+          )}
+        </div>
+      );
+    });
+
+    inyectarBotonEnviar(wp.sendBtnBg || wp.headerBg || "#99c355");
+  }, [wp, mounted]);
+
+  // EFECTO 3: Limpieza total al desmontar el componente (Widget)
+  useEffect(() => {
+    return () => {
+      rootsRef.current.forEach((info) => info.root.unmount());
       rootsRef.current.clear();
     };
-  }, [mounted, getPiezas, wp]);
+  }, []);
 };

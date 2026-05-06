@@ -7,19 +7,14 @@ const FALLBACK_IMAGE = "https://via.placeholder.com/150x100?text=Sin+Imagen";
 /**
  * Componente TarjetaPieza
  * Dibuja una única "caja" con la foto, el título, el precio y el botón de un producto.
- * @param {Object} props
- * @param {Object} props.pieza - Datos del recambio.
- * @param {string} props.pieza.imagen - URL de la foto.
- * @param {string} props.pieza.titulo - Nombre descriptivo.
- * @param {string|number} props.pieza.precio - Precio formateado o numérico.
- * @param {string} props.pieza.url - Enlace de compra.
  */
-
-export const TarjetaPieza = ({ pieza }) => {
+export const TarjetaPieza = ({ pieza, wp }) => {
   const { imagen, titulo, precio, url } = pieza;
 
-  const textoBoton = window.ChatBotConfig?.buyBtnText || "🛒 Comprar";
-  const colorBoton = window.ChatBotConfig?.buyBtnBg || "#99c355";
+  // Prioridad: prop wp > global window > default
+  const config = wp || window.ChatBotConfig || {};
+  const textoBoton = config.buyBtnText || "🛒 Comprar";
+  const colorBoton = config.buyBtnBg || "#99c355";
 
   return (
     <div className="flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden box-border h-full">
@@ -39,7 +34,6 @@ export const TarjetaPieza = ({ pieza }) => {
 
         <PriceDisplay precio={precio} />
 
-        {/* mt-auto empuja el botón al fondo para igualar alturas de tarjeta */}
         <a
           href={url}
           target="_blank"
@@ -56,45 +50,26 @@ export const TarjetaPieza = ({ pieza }) => {
 
 /**
  * Dibuja una cuadrícula de 2 columnas con las tarjetas de los recambios.
- * Si hay más resultados en la base de datos que los mostrados en el chat,
- * inyecta automáticamente un botón ("Ver más") dinámico para redirigir a la tienda.
- *
- * @param {Object} props - Propiedades inyectadas al componente.
- * @param {Array<Object>} props.piezas - Array con los datos de los recambios a mostrar.
- * @param {Object} props.metadata - Datos extra de la consulta al servidor.
- * @param {number} props.metadata.totalReal - Cantidad total de piezas encontradas en la BD.
- * @param {string} props.metadata.queryLimpia - Texto de búsqueda limpiado para construir la URL.
- * @returns {JSX.Element|null} El grid de piezas o `null` si el array está vacío.
  */
-const GridPiezas = ({ piezas, metadata }) => {
+const GridPiezas = ({ piezas, metadata, wp }) => {
   if (!piezas || piezas.length === 0) return null;
 
-  // WORDPRESS PERSONALIZABLE
-  const colorBotonVerMas = window.ChatBotConfig?.viewMoreBtnColor || "#99c355";
-
-  const textoBase =
-    window.ChatBotConfig?.viewMoreBtnText || "Ver las {total} opciones";
+  // Prioridad: prop wp > global window > default
+  const config = wp || window.ChatBotConfig || {};
+  const colorBotonVerMas = config.viewMoreBtnColor || "#99c355";
+  const textoBase = config.viewMoreBtnText || "Ver las {total} opciones";
   
-  const textoVerMasFinal = textoBase.replace("{total}", metadata.totalReal);
+  const textoVerMasFinal = textoBase.replace("{total}", metadata?.totalReal || piezas.length);
 
-  // .ENV : Leemos la URL base de tu .env de Vite
-  const baseUrl =
-    import.meta.env.VITE_SITE_URL ||
-    "https://dev4premium.desguacesyrecambios.com";
-
-  // Verificamos si hay mas resultados de los mostrados.
+  const baseUrl = import.meta.env.VITE_SITE_URL || "https://dev4premium.desguacesyrecambios.com";
   const hayMasResultados = metadata && metadata.totalReal > piezas.length;
-
-  // Construimos la URL dinámica usando el .env
-  const urlWeb = metadata
-    ? `${baseUrl}/recambios/?locale=es&q=${encodeURIComponent(metadata.queryLimpia)}`
-    : "#";
+  const urlWeb = metadata ? `${baseUrl}/recambios/?locale=es&q=${encodeURIComponent(metadata.queryLimpia)}` : "#";
 
   return (
     <div className="flex flex-col w-full">
       <div className="grid grid-cols-2 gap-3 p-2 my-2 w-full box-border bg-transparent">
         {piezas.map((pieza, index) => (
-          <TarjetaPieza key={pieza.id || index} pieza={pieza} />
+          <TarjetaPieza key={pieza.id || index} pieza={pieza} wp={wp} />
         ))}
       </div>
 
@@ -103,7 +78,6 @@ const GridPiezas = ({ piezas, metadata }) => {
           <a
             href={urlWeb}
             target="_blank"
-            // Seguridad: evita que la nueva pestaña manipule la ventana del chat.
             rel="noopener noreferrer"
             className="block text-center text-[12px] font-semibold bg-white border rounded py-2 transition-colors duration-200 w-full"
             style={{

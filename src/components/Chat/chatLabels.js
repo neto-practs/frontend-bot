@@ -59,10 +59,14 @@ export const procesarBurbujas = (selectorCSS, esBot, wpConfig) => {
   burbujasNuevas.forEach((burbuja) => {
     const texto = burbuja.textContent.trim() || "";
 
+    // 🚨 ARREGLO AQUÍ: Si es un texto de piezas (el marcador), lo ignoramos.
+    // Al no crearle etiqueta de nombre, evitamos que se quede flotando
+    // sobre el grid de las fotos.
     if (
       !texto ||
       texto.includes("[object Object]") ||
-      texto.startsWith("---")
+      texto.startsWith("---") ||
+      texto.includes("[[PIEZAS:") // <--- Evita etiquetar marcadores de inyección
     ) {
       burbuja.setAttribute("data-neto-processed", "ignorado");
       return;
@@ -83,13 +87,16 @@ export const procesarBurbujas = (selectorCSS, esBot, wpConfig) => {
 /**
  * Limpiador: Elimina etiquetas en nombres cuyos mensajes
  * asociados ya no existen en el DOM (tras limpiar el historial).
+ * O si la burbuja ha sido ocultada explícitamente (display none).
  */
 export const limpiarEtiquetasHuerfanas = () => {
-  const idsVivos = new Set(
-    Array.from(document.querySelectorAll("[data-neto-id]")).map((el) =>
-      el.getAttribute("data-neto-id"),
-    ),
+  // Solo consideramos "vivos" los contenedores que siguen en el DOM
+  // y que NO tienen display: none.
+  const nodosVivos = Array.from(document.querySelectorAll("[data-neto-id]")).filter(
+    (el) => window.getComputedStyle(el).display !== "none"
   );
+  
+  const idsVivos = new Set(nodosVivos.map((el) => el.getAttribute("data-neto-id")));
 
   document.querySelectorAll("[data-neto-label]").forEach((etiqueta) => {
     if (!idsVivos.has(etiqueta.getAttribute("data-neto-for"))) {
@@ -109,27 +116,20 @@ export const inyectarBotonEnviar = (colorFondo) => {
   if (!botonOriginal) return;
 
   // Ocultamos el original sin eliminarlo del DOM (para que permanezca la funcionalidad correcta).
-  botonOriginal.style.cssText =
-    "position: absolute; opacity: 0; width: 1px; height: 1px;";
+  botonOriginal.style.cssText = "display: none !important";
 
-  const miBoton = document.createElement("button");
-  miBoton.id = "neto-send-btn";
+  const btnNuevo = document.createElement("button");
+  btnNuevo.id = "neto-send-btn";
+  btnNuevo.className =
+    "flex items-center justify-center min-w-[40px] h-[40px] rounded-full transition-transform hover:scale-105 active:scale-95 ml-1";
+  btnNuevo.style.backgroundColor = colorFondo;
+  btnNuevo.innerHTML = ICONO_ENVIAR_SVG;
 
-  miBoton.className =
-    "w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-110";
-
-  //Color dinámico desde el WP.
-  miBoton.style.background = colorFondo;
-  miBoton.innerHTML = ICONO_ENVIAR_SVG;
-
-  miBoton.onclick = (e) => {
+  // Replicamos el click
+  btnNuevo.onclick = (e) => {
     e.preventDefault();
-    document
-      .querySelector(".rcb-chat-input-textarea")
-      ?.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
-      );
+    botonOriginal.click();
   };
-  
-  botonOriginal.parentNode.insertBefore(miBoton, botonOriginal.nextSibling);
+
+  botonOriginal.parentNode.appendChild(btnNuevo);
 };
