@@ -76,7 +76,7 @@ function nfw_sanitize_settings($input) {
     $sanitized = array();
     if (isset($input) && is_array($input)) {
         foreach ($input as $key => $value) {
-            // Elimina etiquetas HTML, scripts y caracteres peligrosos
+            // Elimina etiquetas HTML, scripts y caracteres peligrosos (Permite URLs)
             $sanitized[$key] = sanitize_text_field($value); 
         }
     }
@@ -101,8 +101,8 @@ function nfw_settings_init() {
         add_settings_section('nfw_section_input', '5. Controles Inferiores (Caja de Texto y Enviar)', null, 'nfw-config');
         add_settings_section('nfw_section_images', '6. Logos e Imágenes personalizadas', 'nfw_section_images_desc', 'nfw-config');
         add_settings_section('nfw_section_cards', '7. Tarjetas de Productos', null, 'nfw-config');
+        add_settings_section('nfw_section_api', '8. Conexión al Servidor Inteligente', null, 'nfw-config');
 
-        // CAMPOS (Descripciones claras)
         nfw_add_field('headerBg', 'Color de la Cabecera (Franja superior del chat)', 'color', 'nfw_section_header', '#99c355');
         nfw_add_field('headerTitleColor', 'Color del título en la cabecera', 'color', 'nfw_section_header', '#ffffff');
         nfw_add_field('headerTitleText', 'Título Principal (Ej: Soporte Recambios Neto)', 'text', 'nfw_section_header', 'Soporte Recambios');
@@ -151,6 +151,9 @@ function nfw_settings_init() {
         nfw_add_field('optionsBtnColor', 'Color del texto de opciones', 'color', 'nfw_section_cards', '#333333');
         nfw_add_field('optionsBtnBorder', 'Color del borde de opciones', 'color', 'nfw_section_cards', '#e5e7eb');
         nfw_add_field('optionsBtnHoverBg', 'Fondo de opciones al pasar el ratón', 'color', 'nfw_section_cards', '#f3f4f6');
+
+        nfw_add_field('backendUrl', 'URL del Backend (¡No usar localhost en producción!)', 'text', 'nfw_section_api', 'https://api.midominio.com/api/chat');
+        nfw_add_field('backendApiKey', 'Tu Clave de Acceso (API Key)', 'text', 'nfw_section_api', '');
 
     } catch (\Throwable $e) {
         //Atrapa errores 
@@ -205,14 +208,14 @@ function nfw_render_field($args) {
             echo '</div>';
         echo '</div>';
     } else {
-        //  Asignamos límites de longitud según el campo
-        $maxlength = '255'; // Límite por defecto general
+
+        $maxlength = '255'; 
         
-        if ($id === 'headerTitleText') $maxlength = '18'; // Título cabecera: máx 18
-        if ($id === 'userDisplayName') $maxlength = '18'; // Nombre de usuario: máx 18
-        if ($id === 'refineBtnText' || $id === 'viewBtnText') $maxlength = '30'; // Botones chat: máx 30
-        if ($id === 'buyBtnText') $maxlength = '30'; // Botón de comprar: máx 30
-        if ($id === 'viewMoreBtnText') $maxlength = '40'; // Botón ver más opciones: máx 40 (por el {total})
+        if ($id === 'headerTitleText') $maxlength = '18'; 
+        if ($id === 'userDisplayName') $maxlength = '18'; 
+        if ($id === 'refineBtnText' || $id === 'viewBtnText') $maxlength = '30'; 
+        if ($id === 'buyBtnText') $maxlength = '30'; 
+        if ($id === 'viewMoreBtnText') $maxlength = '40'; 
         
         echo '<input type="text" style="width: 100%; max-width: 400px;" name="nfw_settings[' . $id . ']" value="' . esc_attr($value) . '" maxlength="' . $maxlength . '">';
     }
@@ -280,7 +283,7 @@ function nfw_load_files() {
                 'sendBtnBg'        => nfw_get_val($options, 'sendBtnBg', '#99c355'),
                 'badgeBg'          => nfw_get_val($options, 'badgeBg', '#ff0000'),
                 'chatBodyBg'       => nfw_get_val($options, 'chatBodyBg', '#f9f9f9'),
-                'chatSize'         => nfw_get_val($options, 'chatSize', 'medium'), // <--- SECCIÓN AÑADIDA
+                'chatSize'         => nfw_get_val($options, 'chatSize', 'medium'),
                 'inputContainerBg' => nfw_get_val($options, 'inputContainerBg', '#ffffff'),
                 'inputBorderColor' => nfw_get_val($options, 'inputBorderColor', '#eeeeee'),
                 'labelColor'       => nfw_get_val($options, 'labelColor', '#65676b'),
@@ -297,7 +300,9 @@ function nfw_load_files() {
                 'optionsBtnColor'  => nfw_get_val($options, 'optionsBtnColor', '#333333'),
                 'optionsBtnBorder' => nfw_get_val($options, 'optionsBtnBorder', '#e5e7eb'),
                 'optionsBtnHoverBg'=> nfw_get_val($options, 'optionsBtnHoverBg', '#f3f4f6'),
-                'siteURL'          => site_url()
+                'siteURL'          => site_url(),
+                'backendUrl'       => nfw_get_val($options, 'backendUrl', 'http://localhost:4000/api/chat'),
+                'backendApiKey'    => nfw_get_val($options, 'backendApiKey', '')
             );
 
             wp_localize_script('nfw-js', 'ChatBotConfig', $react_config);

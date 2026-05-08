@@ -51,7 +51,6 @@ export const procesarBurbujas = (selectorCSS, esBot, wpConfig) => {
     : wpConfig.userDisplayName || "Tú";
   const colorTexto = wpConfig.labelColor || "#65676b";
 
-  // Buscar las burbujas que aún no hemos etiquetado
   const burbujasNuevas = document.querySelectorAll(
     `${selectorCSS}:not([data-neto-processed])`,
   );
@@ -59,14 +58,11 @@ export const procesarBurbujas = (selectorCSS, esBot, wpConfig) => {
   burbujasNuevas.forEach((burbuja) => {
     const texto = burbuja.textContent.trim() || "";
 
-    // 🚨 ARREGLO AQUÍ: Si es un texto de piezas (el marcador), lo ignoramos.
-    // Al no crearle etiqueta de nombre, evitamos que se quede flotando
-    // sobre el grid de las fotos.
     if (
       !texto ||
       texto.includes("[object Object]") ||
-      texto.startsWith("---") ||
-      texto.includes("[[PIEZAS:") // <--- Evita etiquetar marcadores de inyección
+      texto.startsWith("---")
+      // ¡NO IGNORAMOS [[PIEZAS:]] AQUÍ!
     ) {
       burbuja.setAttribute("data-neto-processed", "ignorado");
       return;
@@ -80,7 +76,14 @@ export const procesarBurbujas = (selectorCSS, esBot, wpConfig) => {
     const etiquetaNombre = crearEtiquetaNombre(nombre, colorTexto, esBot);
     etiquetaNombre.setAttribute("data-neto-for", generarIdUnico(contenedor));
 
-    contenedor.parentNode.insertBefore(etiquetaNombre, contenedor);
+    // 🚨 LA CLAVE: Si este contenedor tiene un grid de piezas inyectado justo antes,
+    // insertamos el nombre ANTES del grid de piezas, para que quede arriba de todo.
+    const elementoAnterior = contenedor.previousElementSibling;
+    if (elementoAnterior && elementoAnterior.classList.contains("neto-pieza-inyectada")) {
+        contenedor.parentNode.insertBefore(etiquetaNombre, elementoAnterior);
+    } else {
+        contenedor.parentNode.insertBefore(etiquetaNombre, contenedor);
+    }
   });
 };
 

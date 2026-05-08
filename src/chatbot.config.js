@@ -1,6 +1,9 @@
 export const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:4000/api/chat";
-export const API_KEY = import.meta.env.VITE_API_KEY || "";
+  window.ChatBotConfig?.backendUrl ||
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:4000/api/chat";
+export const API_KEY =
+  window.ChatBotConfig?.backendApiKey || import.meta.env.VITE_API_KEY || "";
 export const HORAS_CADUCIDAD =
   Number(import.meta.env.VITE_HORAS_CADUCIDAD) || 8;
 export const IVA_PERCENT = Number(import.meta.env.VITE_IVA_PERCENT) || 0.21;
@@ -43,7 +46,7 @@ export const buildConfig = (wp = {}) => {
     inputBorderColor: wp.inputBorderColor || "#eeeeee",
     badgeBg: wp.badgeBg || "red",
     chatBodyBg: wp.chatBodyBg || "#f9f9f9",
-    chatSize: wp.chatSize || "medium", 
+    chatSize: wp.chatSize || "medium",
   };
 };
 
@@ -166,8 +169,8 @@ export const buildStyles = (config, isMobile) => {
         : {
             bottom: "10px",
             right: "20px",
-            width: desktopWidth,       // <--- Variable asignada dinámicamente
-            height: desktopHeight,     // <--- Variable asignada dinámicamente
+            width: desktopWidth, // <--- Variable asignada dinámicamente
+            height: desktopHeight, // <--- Variable asignada dinámicamente
             borderRadius: "16px",
             boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
           }),
