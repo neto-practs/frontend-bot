@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Floating Widget
  * Description: Agente de búsqueda conversacional configurable desde WordPress.
- * Version: 3.6
+ * Version: 3.7
  * Author: Saul
  */
 
@@ -152,7 +152,7 @@ function nfw_settings_init() {
         nfw_add_field('optionsBtnBorder', 'Color del borde de opciones', 'color', 'nfw_section_cards', '#e5e7eb');
         nfw_add_field('optionsBtnHoverBg', 'Fondo de opciones al pasar el ratón', 'color', 'nfw_section_cards', '#f3f4f6');
 
-        nfw_add_field('backendUrl', 'URL del Backend (¡No usar localhost en producción!)', 'text', 'nfw_section_api', 'https://api.midominio.com/api/chat');
+        nfw_add_field('backendUrl', 'URL del Backend', 'text', 'nfw_section_api', 'https://api.midominio.com/api/chat');
         nfw_add_field('backendApiKey', 'Tu Clave de Acceso (API Key)', 'text', 'nfw_section_api', '');
 
     } catch (\Throwable $e) {
