@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import ChatBot from "react-chatbotify";
 import {
@@ -18,14 +18,19 @@ import {
   sanitizeChatHistory,
 } from "../../utils/chatSession";
 import GridPiezas from "./GridPiezas";
+import PillLauncher from "./PillLauncher";
 
 const ES_PREMIUM = import.meta.env.VITE_MODO_BOT === "PREMIUM";
 
 const FloatingWidget = () => {
   const [mounted, setMounted] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const isReplayingRef = useRef(true);
 
-  const wp = window.ChatBotConfig || {};
+  // useMemo con [] garantiza que wp sea siempre la MISMA referencia.
+  // Sin esto, cada re-render crea un {} nuevo → los useMemo de flow/settings
+  // se invalidan → ChatBot reinicia el flujo → mensaje de bienvenida duplicado.
+  const wp = useMemo(() => window.ChatBotConfig || {}, []);
   const txtRefinar = wp.refineBtnText || "Seguir afinando";
   const txtVer = wp.viewBtnText || "Ver resultados";
 
@@ -44,6 +49,38 @@ const FloatingWidget = () => {
       isReplayingRef.current = false;
     }, 1500); // 1.5s para asegurar que el historial se cargue bien
     return () => clearTimeout(timer);
+  }, []);
+
+  // Inyectar CSS vía JS para ocultar el botón original de forma garantizada.
+  // visibility:hidden mantiene el elemento clickable por JS (.click() sigue funcionando).
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.id = "neto-hide-rcb-btn";
+    style.textContent = `.rcb-toggle-button { visibility: hidden !important; pointer-events: none !important; }`;
+    document.head.appendChild(style);
+    return () => style.remove();
+  }, []);
+
+  // Detectar si el chat está abierto mirando la clase que pone la propia librería:
+  // rcb-button-hide = chat abierto | rcb-button-show = chat cerrado.
+  useEffect(() => {
+    const check = () => {
+      const btn = document.querySelector(".rcb-toggle-button");
+      setIsChatOpen(btn?.classList.contains("rcb-button-hide") ?? false);
+    };
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, {
+      childList: true, subtree: true,
+      attributes: true, attributeFilter: ["class"],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  // Delegar el toggle al botón oculto (visibility:hidden pero .click() funciona)
+  const toggleChat = useCallback(() => {
+    const hiddenBtn = document.querySelector(".rcb-toggle-button");
+    if (hiddenBtn) hiddenBtn.click();
   }, []);
 
   const finalSettings = useMemo(() => {
@@ -146,6 +183,15 @@ const FloatingWidget = () => {
 
   if (!mounted) return null;
 
+  // Config del launcher leída desde window.ChatBotConfig (inyectada por WP)
+  const launcherConfig = {
+    launcherBg:         wp.launcherBg         || "#F5A623",
+    launcherTitle:      wp.launcherTitle      || "Hola, soy Neto",
+    launcherText:       wp.launcherText       || "¿Te ayudo a encontrar tu pieza?",
+    launcherIcon:       wp.launcherIcon       || "",
+    launcherArrowColor: wp.launcherArrowColor || "#000000",
+  };
+
   return createPortal(
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: MAX_Z_INDEX }}>
       <div className="contents pointer-events-auto" style={{
@@ -155,6 +201,14 @@ const FloatingWidget = () => {
           "--opt-hover-bg": wp.optionsBtnHoverBg || "#f3f4f6",
       }}>
         <ChatBot settings={finalSettings} styles={finalStyles} flow={flow} />
+
+        {/* Botón pastilla custom — visible solo cuando el chat está cerrado */}
+        {!isChatOpen && (
+          <PillLauncher
+            toggleChat={toggleChat}
+            config={launcherConfig}
+          />
+        )}
       </div>
     </div>,
     document.body,

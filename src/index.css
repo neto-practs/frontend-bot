@@ -159,3 +159,29 @@ div:has(~ .rcb-user-message-container) > .rcb-options {
   filter: grayscale(100%) !important;
   cursor: not-allowed !important;
 }
+
+/* ---------------------------------------------------
+   ANIMACIONES DE APERTURA / CIERRE DEL CHAT
+   (Keyframes propios para no colisionar con los de la librería)
+--------------------------------------------------- */
+@keyframes neto-chat-open {
+  0%   { opacity: 0; transform: translateY(24px) scale(0.92); }
+  55%  { opacity: 1; transform: translateY(-6px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+@keyframes neto-chat-close {
+  0%   { opacity: 1; transform: translateY(0)    scale(1);    }
+  100% { opacity: 0; transform: translateY(28px) scale(0.90); }
+}
+
+/* Usamos !important para ganar al animation de la librería que carga antes */
+.rcb-window-open .rcb-chat-window {
+  animation: neto-chat-open 0.42s cubic-bezier(0.34, 1.5, 0.64, 1) both !important;
+  visibility: visible !important;
+}
+
+.rcb-window-close .rcb-chat-window {
+  animation: neto-chat-close 0.25s ease-in both !important;
+}
+

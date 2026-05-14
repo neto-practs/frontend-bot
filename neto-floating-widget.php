@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Floating Widget
- * Description: Agente de búsqueda conversacional configurable desde WordPress.
- * Version: 3.7
+ * Description: Agente de búsqueda conversacional.
+ * Version: 3.8
  * Author: Saul
  */
 
@@ -108,8 +108,11 @@ function nfw_settings_init() {
         nfw_add_field('headerTitleText', 'Título Principal (Ej: Soporte Recambios Neto)', 'text', 'nfw_section_header', 'Soporte Recambios');
         nfw_add_field('userDisplayName', 'Nombre que se le da al cliente (Ej: Tú, Invitado)', 'text', 'nfw_section_header', 'Tú');
 
-        nfw_add_field('launcherBg', 'Color del botón flotante (El círculo que abre el chat)', 'color', 'nfw_section_launcher', '#99c355');
-        
+        nfw_add_field('launcherBg', 'Color del fondo de la pastilla (Ej: Amarillo)', 'color', 'nfw_section_launcher', '#F5A623');
+        nfw_add_field('launcherTitle', 'Título del botón (Texto superior en negrita)', 'text', 'nfw_section_launcher', 'Hola, soy Neto');
+        nfw_add_field('launcherText', 'Subtítulo del botón (Texto inferior)', 'text', 'nfw_section_launcher', '¿Te ayudo a encontrar tu pieza?');
+        nfw_add_field('launcherArrowColor', 'Color de la flechita de la derecha', 'color', 'nfw_section_launcher', '#000000');
+
         nfw_add_field('welcomeMessage', 'Mensaje inicial automático de bienvenida', 'text', 'nfw_section_bubbles', 'Buenas, ¿puedo ayudarle?');
         nfw_add_field('mensajeSinStock', 'Respuesta automática: "No hay stock"', 'text', 'nfw_section_bubbles', 'He revisado el almacén, pero no encuentro esa pieza en stock.');
         nfw_add_field('userBubbleBg', 'Color de la burbuja del Cliente (Envíos)', 'color', 'nfw_section_bubbles', '#99c355');
@@ -271,7 +274,10 @@ function nfw_load_files() {
                 'headerTitleColor' => nfw_get_val($options, 'headerTitleColor', '#ffffff'),
                 'headerTitleText'  => nfw_get_val($options, 'headerTitleText', 'Soporte Recambios'),
                 'userDisplayName'  => nfw_get_val($options, 'userDisplayName', 'Tú'),
-                'launcherBg'       => nfw_get_val($options, 'launcherBg', '#99c355'),
+                'launcherBg'       => nfw_get_val($options, 'launcherBg', '#F5A623'),
+                'launcherTitle'    => nfw_get_val($options, 'launcherTitle', 'Hola, soy Neto'),
+                'launcherText'     => nfw_get_val($options, 'launcherText', '¿Te ayudo a encontrar tu pieza?'),
+                'launcherArrowColor'=> nfw_get_val($options, 'launcherArrowColor', '#000000'),
                 'welcomeMessage'   => nfw_get_val($options, 'welcomeMessage', 'Buenas, ¿puedo ayudarle?'),
                 'mensajeSinStock'  => nfw_get_val($options, 'mensajeSinStock', 'He revisado el almacén, pero no encuentro esa pieza en stock.'),
                 'userBubbleBg'     => nfw_get_val($options, 'userBubbleBg', '#99c355'),
