@@ -25,10 +25,10 @@ const PriceDisplay = ({ precio }) => {
 
   return (
     <div className="flex flex-col items-center my-1 gap-0.5">
-      <span className="text-[14px] font-bold text-gray-800 leading-none">
+      <span className="text-[14px] font-bold text-gray-300 leading-none">
         {datosPrecio.conIva}
       </span>
-      <span className="text-[10px] text-gray-500 leading-none">
+      <span className="text-[10px] text-gray-400 leading-none">
         ({datosPrecio.base} sin IVA)
       </span>
     </div>

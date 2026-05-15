@@ -1,4 +1,4 @@
-const ICONO_ENVIAR_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const ICONO_ENVIAR_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 let idGlobal = 0;
 
 /**
@@ -125,7 +125,9 @@ export const inyectarBotonEnviar = (colorFondo) => {
   btnNuevo.id = "neto-send-btn";
   btnNuevo.className =
     "flex items-center justify-center min-w-[40px] h-[40px] rounded-full transition-transform hover:scale-105 active:scale-95 ml-1";
-  btnNuevo.style.backgroundColor = colorFondo;
+  btnNuevo.style.backgroundColor = "#111111";
+  btnNuevo.style.color = "#ffc600";
+  
   btnNuevo.innerHTML = ICONO_ENVIAR_SVG;
 
   // Replicamos el click

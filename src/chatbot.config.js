@@ -1,11 +1,13 @@
+// chatbot.config.js
+// Diseño: Dark Premium — Negro corporativo con acento #ffc600
+// Inspiración: herramienta de trabajo de alto rendimiento, sector automoción
+
 export const API_URL =
   window.ChatBotConfig?.backendUrl ||
-  import.meta.env.VITE_API_URL;
-
-const _SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="white"/><rect x="47" y="4" width="6" height="14" rx="3" fill="#1a1a1a"/><circle cx="50" cy="4" r="5" fill="#1a1a1a"/><rect x="18" y="18" width="64" height="52" rx="14" fill="#1a1a1a"/><ellipse cx="37" cy="40" rx="9" ry="10" fill="white"/><ellipse cx="63" cy="40" rx="9" ry="10" fill="white"/><path d="M38 58 Q50 68 62 58" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/><rect x="38" y="70" width="24" height="12" rx="4" fill="#1a1a1a"/></svg>`;
-export const BOT_AVATAR_URL = `data:image/svg+xml;base64,${btoa(_SVG)}`;
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:4000/api/chat";
 export const API_KEY =
-  window.ChatBotConfig?.backendApiKey || import.meta.env.VITE_API_KEY;
+  window.ChatBotConfig?.backendApiKey || import.meta.env.VITE_API_KEY || "";
 export const HORAS_CADUCIDAD =
   Number(import.meta.env.VITE_HORAS_CADUCIDAD) || 8;
 export const IVA_PERCENT = Number(import.meta.env.VITE_IVA_PERCENT) || 0.21;
@@ -19,199 +21,316 @@ export const FALLBACK_IMAGE =
 // Claves de LocalStorage
 export const STORAGE_KEY = "neto_chat_history";
 export const SESSION_KEY = "neto_chat_inicio_sesion";
-export const PIEZAS_KEY = "neto_historial_piezas";
+export const PIEZAS_KEY  = "neto_historial_piezas";
 export const CONTEXT_KEY = "neto_chat_contexto";
 
-/**
- * CONFIGURACIÓN BASE
- * Mapea los valores de WordPress a una estructura limpia.
- */
+// ── Paleta corporativa ────────────────────────────────────────────────────────
+const BRAND = {
+  yellow:     "#ffc600",
+  yellowDark: "#e6b000",   // hover / pressed state
+  yellowGlow: "rgba(255,198,0,0.18)",
+  black:      "#111111",
+  darkGray:   "#1c1c1c",   // header background
+  midGray:    "#2a2a2a",   // secondary dark
+  lightGray:  "#f5f5f5",   // chat body
+  offWhite:   "#fafafa",   // input background
+  textLight:  "#e8e8e8",   // text on dark backgrounds
+  textDark:   "#111111",   // text on light backgrounds
+  textMuted:  "#888888",
+  border:     "#e0e0e0",
+  darkBorder: "#333333",
+};
+
+// Avatar SVG — robot sobre fondo negro con ojo amarillo
+const _SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="${BRAND.darkGray}"/>
+  <rect x="20" y="24" width="60" height="48" rx="12" fill="${BRAND.black}" stroke="${BRAND.yellow}" stroke-width="2.5"/>
+  <circle cx="37" cy="44" r="8" fill="${BRAND.yellow}" opacity="0.95"/>
+  <circle cx="37" cy="44" r="4" fill="${BRAND.black}"/>
+  <circle cx="63" cy="44" r="8" fill="${BRAND.yellow}" opacity="0.95"/>
+  <circle cx="63" cy="44" r="4" fill="${BRAND.black}"/>
+  <rect x="42" y="54" width="16" height="4" rx="2" fill="${BRAND.yellow}" opacity="0.8"/>
+  <rect x="46" y="4" width="8" height="16" rx="4" fill="${BRAND.yellow}"/>
+  <circle cx="50" cy="4" r="5" fill="${BRAND.yellow}"/>
+  <rect x="36" y="72" width="28" height="10" rx="5" fill="${BRAND.midGray}"/>
+</svg>`;
+export const BOT_AVATAR_URL = `data:image/svg+xml;base64,${btoa(_SVG)}`;
+
+// ── buildConfig ───────────────────────────────────────────────────────────────
 export const buildConfig = (wp = {}) => {
-  const primaryColor = wp.headerBg || "#99c355";
+  const primary = wp.headerBg || BRAND.darkGray;
 
   return {
-    primary: primaryColor,
-    headerTitleColor: wp.headerTitleColor || "#ffffff",
-    headerTitleText: wp.headerTitleText || "Soporte Recambios",
-    headerAvatar: wp.headerAvatar || "",
-    launcherIcon: wp.launcherIcon || "",
-    launcherBg: wp.launcherBg || primaryColor,
-    userDisplayName: wp.userDisplayName || "Tú",
-    userBubbleBg: wp.userBubbleBg || primaryColor,
-    userTextColor: wp.userTextColor || "#ffffff",
-    botBubbleBg: wp.botBubbleBg || "#f0f2f5",
-    botTextColor: wp.botTextColor || "#000000",
-    inputBoxBg: wp.inputBoxBg || "#f4f4f4",
-    inputFocusBorder: wp.inputFocusBorder || primaryColor,
-    sendBtnBg: wp.sendBtnBg || primaryColor,
-    inputContainerBg: wp.inputContainerBg || "#ffffff",
-    inputBorderColor: wp.inputBorderColor || "#eeeeee",
-    badgeBg: wp.badgeBg || "red",
-    chatBodyBg: wp.chatBodyBg || "#f9f9f9",
-    chatSize: wp.chatSize || "medium",
+    primary,
+    accent:           BRAND.yellow,
+    headerTitleColor: wp.headerTitleColor  || BRAND.textLight,
+    headerTitleText:  wp.headerTitleText   || "Soporte Recambios",
+    headerAvatar:     wp.headerAvatar      || "",
+    launcherIcon:     wp.launcherIcon      || "",
+    launcherBg:       wp.launcherBg        || BRAND.darkGray,
+
+    userDisplayName:  wp.userDisplayName   || "Tú",
+    userBubbleBg:     wp.userBubbleBg      || BRAND.yellow,
+    userTextColor:    wp.userTextColor     || BRAND.textDark,
+
+    botBubbleBg:      wp.botBubbleBg       || "#ffffff",
+    botTextColor:     wp.botTextColor      || BRAND.textDark,
+
+    inputBoxBg:       wp.inputBoxBg        || BRAND.offWhite,
+    inputFocusBorder: wp.inputFocusBorder  || BRAND.yellow,
+    sendBtnBg:        wp.sendBtnBg         || BRAND.yellow,
+    inputContainerBg: wp.inputContainerBg  || "#ffffff",
+    inputBorderColor: wp.inputBorderColor  || BRAND.border,
+
+    badgeBg:          wp.badgeBg           || "#EF4444",
+    chatBodyBg:       wp.chatBodyBg        || BRAND.lightGray,
+    chatSize:         wp.chatSize          || "medium",
   };
 };
 
-/**
- * ESTILOS VISUALES
- * Define los estilos que inyectaremos en la librería.
- */
+// ── buildStyles ───────────────────────────────────────────────────────────────
 export const buildStyles = (config, isMobile) => {
-  // Lógica de tamaño dinámico para escritorio
-  let desktopWidth = "300px";
-  let desktopHeight = "min(600px, 85vh)"; // Tamaño "medium" por defecto
-
-  if (config.chatSize === "small") {
-    desktopWidth = "280px";
-    desktopHeight = "min(500px, 80vh)";
-  } else if (config.chatSize === "large") {
-    desktopWidth = "360px";
-    desktopHeight = "min(720px, 90vh)";
-  }
+  // Tamaños de ventana según chatSize
+  const sizes = {
+    small:  { w: "300px", h: "min(520px, 82vh)" },
+    medium: { w: "340px", h: "min(620px, 88vh)" },
+    large:  { w: "390px", h: "min(720px, 92vh)" },
+  };
+  const sz = sizes[config.chatSize] || sizes.medium;
 
   return {
-   // Dentro de buildStyles en chatbot.config.js
-headerStyle: {
-  background: config.primary,
-  color: config.headerTitleColor,
-  // Subimos el padding a 45px arriba/abajo para que sea una cabecera alta y profesional
-  padding: "50px 20px", 
-  display: "flex",
-  alignItems: "center",
-  borderTopLeftRadius: isMobile ? "0px" : "16px",
-  borderTopRightRadius: isMobile ? "0px" : "16px",
-  position: "relative",
-},
+    // ── Cabecera: negro profundo con borde inferior amarillo ───────────────
+    headerStyle: {
+      background:           BRAND.yellow,
+      color:                config.headerTitleColor,
+      padding:              "0 16px",
+      minHeight:            "84px",
+      display:              "flex",
+      alignItems:           "center",
+      borderTopLeftRadius:  isMobile ? "0" : "20px",
+      borderTopRightRadius: isMobile ? "0" : "20px",
+      borderBottom:         `3px solid ${BRAND.yellow}`,
+      position:             "relative",
+      boxSizing:            "border-box",
+      overflow:             "hidden",
+    },
+
+    // ── Cuerpo: gris muy claro con patrón sutil ────────────────────────────
     bodyStyle: {
       backgroundColor: config.chatBodyBg,
-      flex: "1",
-      overflowY: "auto",
+      flex:            "1",
+      overflowY:       "auto",
+      backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px)`,
+      backgroundSize:  "20px 20px",
     },
+
+    // ── Burbuja usuario: amarillo corporativo ──────────────────────────────
     userBubbleStyle: {
       backgroundColor: config.userBubbleBg,
-      color: config.userTextColor,
-      borderRadius: "15px 15px 2px 15px",
-      padding: "12px",
-      maxWidth: "80%",
-      wordBreak: "break-word",
+      color:           config.userTextColor,
+      borderRadius:    "18px 18px 4px 18px",
+      padding:         "10px 14px",
+      maxWidth:        "78%",
+      wordBreak:       "break-word",
+      fontWeight:      "500",
+      fontSize:        "14px",
+      boxShadow:       "0 2px 8px rgba(255,198,0,0.25)",
     },
+
+    // ── Burbuja bot: blanco con sombra suave ───────────────────────────────
     botBubbleStyle: {
       backgroundColor: config.botBubbleBg,
-      color: config.botTextColor,
-      borderRadius: "15px 15px 15px 2px",
-      padding: "12px",
-      maxWidth: "80%",
-      wordBreak: "break-word",
+      color:           config.botTextColor,
+      borderRadius:    "4px 18px 18px 18px",
+      padding:         "10px 14px",
+      maxWidth:        "78%",
+      wordBreak:       "break-word",
+      fontSize:        "14px",
+      boxShadow:       "0 1px 4px rgba(0,0,0,0.08)",
+      border:          "1px solid rgba(0,0,0,0.06)",
     },
+
+    // ── Opciones (botones rápidos) ─────────────────────────────────────────
+    botOptionStyle: {
+      backgroundColor: "#ffffff",
+      color:           BRAND.textDark,
+      border:          `1.5px solid ${BRAND.yellow}`,
+      borderRadius:    "20px",
+      padding:         "6px 14px",
+      fontSize:        "13px",
+      fontWeight:      "500",
+      cursor:          "pointer",
+      transition:      "all 0.15s ease",
+    },
+    botOptionHoveredStyle: {
+      backgroundColor: BRAND.yellow,
+      color:           BRAND.textDark,
+      border:          `1.5px solid ${BRAND.yellow}`,
+      borderRadius:    "20px",
+      fontWeight:      "600",
+    },
+
+    // ── Input ──────────────────────────────────────────────────────────────
     chatInputContainerStyle: {
       backgroundColor: config.inputContainerBg,
-      padding: "10px",
-      borderTop: `1px solid ${config.inputBorderColor}`,
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
+      padding:         "10px 12px",
+      borderTop:       `1px solid ${config.inputBorderColor}`,
+      display:         "flex",
+      alignItems:      "center",
+      gap:             "8px",
     },
     chatInputAreaStyle: {
       backgroundColor: config.inputBoxBg,
-      height: "44px",
-      minHeight: "44px",
-      borderRadius: "22px",
-      fontSize: "15px",
-      paddingLeft: "16px",
-      paddingRight: "16px",
-      flex: "1",
-      boxSizing: "border-box",
+      height:          "46px",
+      minHeight:       "46px",
+      borderRadius:    "23px",
+      fontSize:        "14px",
+      paddingLeft:     "18px",
+      paddingRight:    "18px",
+      flex:            "1",
+      boxSizing:       "border-box",
+      border:          `1.5px solid ${config.inputBorderColor}`,
+      color:           BRAND.textDark,
+      fontWeight:      "400",
     },
     chatInputAreaFocusedStyle: {
-      border: `1.5px solid ${config.inputFocusBorder}`,
-      outline: "none",
-      boxShadow: "none",
+      border:     `1.5px solid ${config.inputFocusBorder}`,
+      outline:    "none",
+      boxShadow:  `0 0 0 3px ${BRAND.yellowGlow}`,
     },
+
+    // ── Botón enviar (oculto — lo reemplazamos con el nuestro) ────────────
     sendButtonStyle: {
-      opacity: "0",
-      position: "absolute",
-      width: "1px",
-      height: "1px",
-      overflow: "hidden",
+      opacity:   "0",
+      position:  "absolute",
+      width:     "1px",
+      height:    "1px",
+      overflow:  "hidden",
+    },
+    sendButtonHoveredStyle: {},
+
+    // ── Botón cerrar ───────────────────────────────────────────────────────
+    closeChatButtonStyle: {
+      position:        "absolute",
+      top:             "10px",
+      right:           "10px",
+      zIndex:          "9999",
+      display:         "flex",
+      alignItems:      "center",
+      justifyContent:  "center",
+      width:           "36px",
+      height:          "36px",
+      borderRadius:    "50%",
+      cursor:          "pointer",
+      backgroundColor: "rgba(255,255,255,0.08)",
+      transition:      "background 0.2s ease",
     },
     closeChatIconStyle: {
-      fill: config.headerTitleColor,
-      width: "25px",
-      height: "25px",
+      fill:   config.headerTitleColor,
+      width:  "20px",
+      height: "20px",
     },
-    notificationBadgeStyle: { background: config.badgeBg, color: "#fff" },
 
-    // Desactivamos elementos redundantes
+    // ── Badge notificaciones ───────────────────────────────────────────────
+    notificationBadgeStyle: {
+      background: config.badgeBg,
+      color:      "#fff",
+      fontWeight: "700",
+      fontSize:   "11px",
+    },
+
+    // ── Elementos desactivados ─────────────────────────────────────────────
     notificationButtonStyle: { display: "none" },
-    audioButtonStyle: { display: "none" },
-    footerStyle: { display: "none", padding: 0, margin: 0, height: 0 },
+    audioButtonStyle:        { display: "none" },
+    footerStyle:             { display: "none", padding: 0, margin: 0, height: 0 },
 
+    // ── Avatar bot ─────────────────────────────────────────────────────────
     botBubbleAvatarStyle: {
-      width: "36px",
-      height: "36px",
+      width:        "34px",
+      height:       "34px",
       borderRadius: "50%",
-      objectFit: "cover",
+      objectFit:    "cover",
+      border:       `2px solid ${BRAND.yellow}`,
+      boxShadow:    "0 2px 6px rgba(0,0,0,0.2)",
     },
+
+    // ── Botón flotante launcher ────────────────────────────────────────────
     chatButtonStyle: {
-      background: config.launcherIcon ? "transparent" : config.launcherBg,
-      boxShadow: config.launcherIcon ? "none" : "0 4px 12px rgba(0,0,0,0.3)",
-      zIndex: MAX_Z_INDEX,
+      background:  config.launcherIcon ? "transparent" : BRAND.darkGray,
+      boxShadow:   config.launcherIcon ? "none" : `0 6px 20px rgba(0,0,0,0.35), 0 0 0 3px ${BRAND.yellow}`,
+      border:      config.launcherIcon ? "none" : `2px solid ${BRAND.yellow}`,
+      borderRadius: "50%",
+      zIndex:       MAX_Z_INDEX,
+      transition:   "transform 0.2s ease, box-shadow 0.2s ease",
     },
+
+    // ── Ventana del chat ───────────────────────────────────────────────────
     chatWindowStyle: {
-      zIndex: MAX_Z_INDEX,
-      display: "flex",
+      zIndex:        MAX_Z_INDEX,
+      display:       "flex",
       flexDirection: "column",
       ...(isMobile
         ? {
-            inset: 0,
-            width: "100vw",
-            height: "100dvh",
-            maxWidth: "100vw",
-            maxHeight: "100dvh",
+            inset:        0,
+            width:        "100vw",
+            height:       "100dvh",
+            maxWidth:     "100vw",
+            maxHeight:    "100dvh",
             borderRadius: 0,
           }
         : {
-            bottom: "10px",
-            right: "20px",
-            width: desktopWidth, // <--- Variable asignada dinámicamente
-            height: desktopHeight, // <--- Variable asignada dinámicamente
-            borderRadius: "16px",
-            boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+            bottom:       "24px",
+            right:        "24px",
+            width:        sz.w,
+            height:       sz.h,
+            borderRadius: "20px",
+            boxShadow:    "0 20px 60px rgba(0,0,0,0.22), 0 4px 12px rgba(0,0,0,0.12)",
+            border:       `1px solid ${BRAND.darkBorder}`,
           }),
+    },
+
+    // ── Historial "Previous Chat History" ─────────────────────────────────
+    chatHistoryButtonStyle: {
+      backgroundColor: BRAND.yellow,
+      color:           BRAND.textDark,
+      fontWeight:      "600",
+      fontSize:        "13px",
+      borderRadius:    "20px",
+      padding:         "6px 18px",
+      border:          "none",
+    },
+    chatHistoryButtonHoveredStyle: {
+      backgroundColor: BRAND.yellowDark,
     },
   };
 };
 
-/**
- * AJUSTES FUNCIONALES
- * Configura los módulos de la librería react-chatbotify.
- */
+// ── buildSettings ─────────────────────────────────────────────────────────────
 export const buildSettings = (config, isMobile) => ({
-  device: { applyMobileOptimizations: false },
-  general: { embedded: false, showFooter: false },
-  tooltip: { mode: "HIDDEN" },
-  notification: { disabled: false, showCount: true },
-  audio: { disabled: true },
-  emoji: { disabled: true },
+  device:         { applyMobileOptimizations: false },
+  general:        { embedded: false, showFooter: false },
+  tooltip:        { mode: "HIDDEN" },
+  notification:   { disabled: false, showCount: true },
+  audio:          { disabled: true },
+  emoji:          { disabled: true },
   fileAttachment: { disabled: true },
   chatHistory: {
-    storageKey: STORAGE_KEY,
-    disabled: false,
-    autoLoad: true,
+    storageKey:      STORAGE_KEY,
+    disabled:        false,
+    autoLoad:        true,
     showChatHistory: true,
   },
   header: {
-    title: config.headerTitleText,
+    title:      config.headerTitleText,
     showAvatar: true,
-    avatar: config.headerAvatar || BOT_AVATAR_URL,
+    avatar:     config.headerAvatar || BOT_AVATAR_URL,
   },
   chatButton: {
-    ...(config.launcherIcon && { icon: config.launcherIcon }),
-  },
-  // ¡ESTA ES LA CLAVE PARA QUE VUELVA EL AVATAR EN LOS MENSAJES!
+  icon: config.launcherIcon || BOT_AVATAR_URL, 
+},
   botBubble: {
-    showAvatar: true,
+    showAvatar:    true,
     showTimestamp: false,
-    avatar: config.headerAvatar || BOT_AVATAR_URL,
+    avatar:        config.headerAvatar || BOT_AVATAR_URL,
   },
 });

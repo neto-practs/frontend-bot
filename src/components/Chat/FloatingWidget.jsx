@@ -24,12 +24,11 @@ import PillLauncher from "./PillLauncher";
 const ES_PREMIUM = import.meta.env.VITE_MODO_BOT === "PREMIUM";
 
 // ==========================================
-// COMPONENTE: CABECERA TRIPLE PISO (STOCKED)
+// COMPONENTE: CABECERA CON SCALING ADAPTATIVO (cqw)
 // ==========================================
 const CustomHeader = ({ title, avatar }) => {
   const [isOnline, setIsOnline] = useState(true);
 
-  // Lógica de pulso automático
   useEffect(() => {
     const checkBackend = async () => {
       try {
@@ -46,87 +45,92 @@ const CustomHeader = ({ title, avatar }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Colores más oscuros solicitados
+  const colorOnline = "#15803d"; // Verde oscuro
+  const colorOffline = "#b91c1c"; // Rojo oscuro
+
   return (
     <div style={{ 
       display: "flex", 
       alignItems: "center", 
-      gap: "18px", 
-      width: "100%",
-      // MUY IMPORTANTE: Dejamos espacio a la derecha para que el texto NO tape la "X"
-      paddingRight: "45px" 
+      gap: "12px", // Aumentado ligeramente para mejor separación
+      width: "100%", 
+      boxSizing: "border-box",
+      // REQUISITO: padding-right de 40px para la X, y un poco de padding left
+      padding: "5px 40px 5px 5px", 
     }}>
-      {/* AVATAR CIRCULAR */}
-      <div style={{ position: "relative", display: "flex", flexShrink: 0 }}>
+      {/* 1. AVATAR CON INDICADOR */}
+      <div style={{ position: "relative", flexShrink: 0 }}>
         <div style={{
-          width: "52px", height: "52px", 
+          width: "50px", 
+          height: "50px",
           borderRadius: "50%", 
           backgroundColor: "#ffffff", 
+          border: "2px solid rgba(255,255,255,0.2)",
           overflow: "hidden", 
           display: "flex", 
           alignItems: "center", 
           justifyContent: "center",
-          boxShadow: "0 3px 8px rgba(0,0,0,0.2)",
-          border: "2.5px solid rgba(255,255,255,0.3)"
+          boxShadow: "0 4px 10px rgba(0,0,0,0.1)"
         }}>
           {avatar ? (
             <img src={avatar} alt="Bot" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#333" width="30" height="30">
-               <path d="M21 11.5v-1a1.5 1.5 0 0 0-1.5-1.5H18V7a3 3 0 0 0-3-3h-6a3 3 0 0 0-3 3v2H4.5A1.5 1.5 0 0 0 3 10.5v1A1.5 1.5 0 0 0 4.5 13H6v2a3 3 0 0 0 3 3h1v2H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-2v-2h1a3 3 0 0 0 3-3v-2h1.5A1.5 1.5 0 0 0 21 11.5zm-11-2.5a1 1 0 1 1-1-1 1 1 0 0 1 1 1zm5 0a1 1 0 1 1-1-1 1 1 0 0 1 1 1zm-4 5h2a1 1 0 0 1 0 2h-2a1 1 0 0 1 0-2z" />
-            </svg>
+            <svg viewBox="0 0 24 24" fill="#333" width="60%" height="60%"><path d="M21 11.5v-1a1.5 1.5 0 0 0-1.5-1.5H18V7a3 3 0 0 0-3-3h-6a3 3 0 0 0-3 3v2H4.5A1.5 1.5 0 0 0 3 10.5v1A1.5 1.5 0 0 0 4.5 13H6v2a3 3 0 0 0 3 3h1v2H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-2v-2h1a3 3 0 0 0 3-3v-2h1.5A1.5 1.5 0 0 0 21 11.5zm-11-2.5a1 1 0 1 1-1-1 1 1 0 0 1 1 1zm5 0a1 1 0 1 1-1-1 1 1 0 0 1 1 1zm-4 5h2a1 1 0 0 1 0 2h-2a1 1 0 0 1 0-2z" /></svg>
           )}
         </div>
-        {/* Puntito de luz */}
         <div style={{
-          position: "absolute", bottom: "2px", right: "2px",
-          width: "14px", height: "14px", borderRadius: "50%",
-          backgroundColor: isOnline ? "#22c55e" : "#ef4444", 
+          position: "absolute", 
+          bottom: "2px", 
+          right: "2px",
+          width: "12px", 
+          height: "12px",
+          borderRadius: "50%", 
+          backgroundColor: isOnline ? colorOnline : colorOffline, 
           border: "2px solid #ffffff",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.4)"
+          boxShadow: "0 0 5px rgba(0,0,0,0.2)"
         }} />
       </div>
 
-      {/* BLOQUE DE TEXTO EN COLUMNA (UNO ENCIMA DE OTRO) */}
+      {/* 2. BLOQUE DE TEXTO (3 PISOS) */}
       <div style={{ 
         display: "flex", 
         flexDirection: "column", 
+        justifyContent: "center",
         flex: 1, 
-        minWidth: 0 
+        minWidth: 0
       }}>
-        {/* Nivel 1: Título */}
+        {/* Línea 1: Título */}
         <span style={{ 
-          fontSize: "20px", 
-          fontWeight: "900", 
-          color: "#ffffff", 
-          lineHeight: "1.1",
-          letterSpacing: "-0.5px",
-          whiteSpace: "nowrap" 
+          fontSize: "clamp(16px, 1.2rem, 20px)", 
+          fontWeight: "800", 
+          color: "#000000", 
+          lineHeight: "1.2", 
+          whiteSpace: "nowrap"
         }}>
           {title || "Asistente IA"}
         </span>
 
-        {/* Nivel 2: Especialidad */}
+        {/* Línea 2: Subtítulo */}
         <span style={{ 
           fontSize: "14px", 
-          fontWeight: "600", 
-          color: "rgba(255, 255, 255, 0.95)", 
-          lineHeight: "1.2",
-          marginTop: "3px"
+          fontWeight: "400", 
+          color: "rgba(0, 0, 0, 0.8)", 
+          marginTop: "1px",
+          whiteSpace: "nowrap"
         }}>
           Especialista en Recambios
         </span>
 
-        {/* Nivel 3: Estado con colores dinámicos */}
+        {/* Línea 3: Estado Dinámico */}
         <span style={{ 
-          fontSize: "12px", 
-          fontWeight: "800", 
-          color: isOnline ? "#36ae62" : "#fa4747", 
-          letterSpacing: "0.8px",
-          marginTop: "4px",
-          transition: "color 0.4s ease",
-          whiteSpace: "nowrap"
+          fontSize: "11px", 
+          fontWeight: "700", 
+          color: isOnline ? colorOnline : colorOffline, 
+          marginTop: "3px", 
+          letterSpacing: "0.05em"
         }}>
-          {isOnline ? "• En línea" : "• Fuera de Servicio"}
+          {isOnline ? "• En línea" : "• Fuera de servicio"}
         </span>
       </div>
     </div>
@@ -178,6 +182,47 @@ const FloatingWidget = () => {
     check();
     const observer = new MutationObserver(check);
     observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  // FIX: Forzamos el botón de cierre a ser grande y centrado dinámicamente
+  useEffect(() => {
+    const applyFix = () => {
+      const selectors = [
+        ".rcb-close-button", 
+        "button[aria-label='Close Chat']", 
+        "[class*='close-button']"
+      ];
+      selectors.forEach(sel => {
+        document.querySelectorAll(sel).forEach(btn => {
+          btn.style.setProperty("position", "absolute", "important");
+          btn.style.setProperty("top", "8px", "important");
+          btn.style.setProperty("right", "8px", "important");
+          btn.style.setProperty("width", "50px", "important");
+          btn.style.setProperty("height", "50px", "important");
+          btn.style.setProperty("display", "flex", "important");
+          btn.style.setProperty("align-items", "center", "important");
+          btn.style.setProperty("justify-content", "center", "important");
+          btn.style.setProperty("z-index", "99999", "important");
+          btn.style.setProperty("background", "transparent", "important");
+          btn.style.setProperty("padding", "0", "important");
+          btn.style.setProperty("margin", "0", "important");
+          
+          const svg = btn.querySelector("svg");
+          if (svg) {
+            svg.style.setProperty("width", "36px", "important");
+            svg.style.setProperty("height", "36px", "important");
+            svg.style.setProperty("margin", "0", "important");
+            svg.style.setProperty("display", "block", "important");
+            svg.style.setProperty("flex-shrink", "0", "important");
+          }
+        });
+      });
+    };
+    
+    applyFix();
+    const observer = new MutationObserver(applyFix);
+    observer.observe(document.body, { childList: true, subtree: true });
     return () => observer.disconnect();
   }, []);
 
@@ -293,10 +338,10 @@ const FloatingWidget = () => {
   if (!mounted) return null;
 
   const launcherConfig = {
-    launcherBg:         wp.launcherBg         || "#F5A623",
-    launcherTitle:      wp.launcherTitle      || "Hola, soy Neto",
-    launcherText:       wp.launcherText       || "¿Te ayudo a encontrar tu pieza?",
-    launcherIcon:       wp.launcherIcon       || "",
+    launcherBg:         wp.launcherBg         || "#ffc600",
+    launcherTitle:      wp.launcherTitle      || "¿No encuentras tu pieza?",
+    launcherText:       wp.launcherText       || "Pregúntale a la IA",
+    launcherIcon:       wp.launcherIcon       || BOT_AVATAR_URL,  
     launcherArrowColor: wp.launcherArrowColor || "#000000",
   };
 
@@ -304,10 +349,12 @@ const FloatingWidget = () => {
   return createPortal(
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: MAX_Z_INDEX }}>
       <div className="contents pointer-events-auto" style={{
-          "--opt-bg": wp.optionsBtnBg || "#ffffff",
-          "--opt-color": wp.optionsBtnColor || "#333333",
-          "--opt-border": wp.optionsBtnBorder || "#e5e7eb",
-          "--opt-hover-bg": wp.optionsBtnHoverBg || "#f3f4f6",
+          "--opt-bg": wp.optionsBtnBg || "#ffffff",               
+          "--opt-color": wp.optionsBtnColor || "#111827",        
+          "--opt-border": wp.optionsBtnBorder || "#ffc600",      
+          
+          "--opt-hover-bg": wp.optionsBtnHoverBg || "#ffc600",   
+          "--opt-hover-color": wp.optionsBtnHoverColor || "#111827" 
       }}>
         <ChatBot settings={finalSettings} styles={finalStyles} flow={flow} />
 

@@ -181,7 +181,32 @@ div:has(~ .rcb-user-message-container) > .rcb-options {
   visibility: visible !important;
 }
 
-.rcb-window-close .rcb-chat-window {
-  animation: neto-chat-close 0.25s ease-in both !important;
+/* ---------------------------------------------------
+   CENTRAR Y AMPLIAR FIGURA DE LA X (BOTÓN CIERRE)
+--------------------------------------------------- */
+.rcb-close-button {
+  display: block !important;
+  position: relative !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 0 !important;
+  width: 32px !important; /* Aseguramos un área circular definida */
+  height: 32px !important;
+  border-radius: 50% !important;
 }
+
+.rcb-close-button svg {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important; /* Centrado matemático absoluto */
+  width: 24px !important; /* Tamaño aumentado solicitado */
+  height: 24px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+
+
+
 
