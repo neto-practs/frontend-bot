@@ -1,9 +1,11 @@
 export const API_URL =
   window.ChatBotConfig?.backendUrl ||
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:4000/api/chat";
+  import.meta.env.VITE_API_URL;
+
+const _SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="white"/><rect x="47" y="4" width="6" height="14" rx="3" fill="#1a1a1a"/><circle cx="50" cy="4" r="5" fill="#1a1a1a"/><rect x="18" y="18" width="64" height="52" rx="14" fill="#1a1a1a"/><ellipse cx="37" cy="40" rx="9" ry="10" fill="white"/><ellipse cx="63" cy="40" rx="9" ry="10" fill="white"/><path d="M38 58 Q50 68 62 58" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/><rect x="38" y="70" width="24" height="12" rx="4" fill="#1a1a1a"/></svg>`;
+export const BOT_AVATAR_URL = `data:image/svg+xml;base64,${btoa(_SVG)}`;
 export const API_KEY =
-  window.ChatBotConfig?.backendApiKey || import.meta.env.VITE_API_KEY || "";
+  window.ChatBotConfig?.backendApiKey || import.meta.env.VITE_API_KEY;
 export const HORAS_CADUCIDAD =
   Number(import.meta.env.VITE_HORAS_CADUCIDAD) || 8;
 export const IVA_PERCENT = Number(import.meta.env.VITE_IVA_PERCENT) || 0.21;
@@ -68,16 +70,18 @@ export const buildStyles = (config, isMobile) => {
   }
 
   return {
-    headerStyle: {
-      background: config.primary,
-      color: config.headerTitleColor,
-      fontSize: "16px",
-      padding: "18px",
-      fontWeight: "600",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      whiteSpace: "nowrap",
-    },
+   // Dentro de buildStyles en chatbot.config.js
+headerStyle: {
+  background: config.primary,
+  color: config.headerTitleColor,
+  // Subimos el padding a 45px arriba/abajo para que sea una cabecera alta y profesional
+  padding: "50px 20px", 
+  display: "flex",
+  alignItems: "center",
+  borderTopLeftRadius: isMobile ? "0px" : "16px",
+  borderTopRightRadius: isMobile ? "0px" : "16px",
+  position: "relative",
+},
     bodyStyle: {
       backgroundColor: config.chatBodyBg,
       flex: "1",
@@ -199,14 +203,15 @@ export const buildSettings = (config, isMobile) => ({
   header: {
     title: config.headerTitleText,
     showAvatar: true,
-    ...(config.headerAvatar && { avatar: config.headerAvatar }),
+    avatar: config.headerAvatar || BOT_AVATAR_URL,
   },
   chatButton: {
     ...(config.launcherIcon && { icon: config.launcherIcon }),
   },
+  // ¡ESTA ES LA CLAVE PARA QUE VUELVA EL AVATAR EN LOS MENSAJES!
   botBubble: {
     showAvatar: true,
     showTimestamp: false,
-    ...(config.headerAvatar && { avatar: config.headerAvatar }),
+    avatar: config.headerAvatar || BOT_AVATAR_URL,
   },
 });

@@ -11,6 +11,7 @@ import { gestionarSesionChat } from "../utils/chatSession";
  * @throws {Error} Si la conexión falla o el servidor devuelve un status != 200.
  */
 const fetchBotResponse = async (userInput, contextoAnterior) => {
+  console.log("LLAVE QUE ENVÍO AL SERVIDOR:", API_KEY); 
   const response = await fetch(API_URL, {
     method: "POST",
     headers: {
