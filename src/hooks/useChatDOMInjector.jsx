@@ -17,20 +17,21 @@ export const useChatDOMInjector = (mounted, getPiezas, wp) => {
   }, [wp]);
 
   const inyectarHistorico = useCallback(() => {
-    const bubbles = document.querySelectorAll(".rcb-bot-message");
+    // Solo buscamos burbujas que no hayamos inyectado con piezas aún
+    const bubbles = document.querySelectorAll(".rcb-bot-message:not([data-neto-pieces-injected])");
     
     bubbles.forEach((bubble) => {
       const fullText = bubble.textContent?.trim() || "";
 
       if (fullText === "[object Object]") {
-        bubble.style.display = "none";
+        bubble.style.setProperty("display", "none", "important");
         return;
       }
 
       if (!fullText.includes("[[PIEZAS:")) return;
 
-      if (bubble.dataset.netoInjected === "true") return;
-      bubble.dataset.netoInjected = "true";
+      // Marcamos esta burbuja nativa como procesada por nuestro inyector de piezas
+      bubble.dataset.netoPiecesInjected = "true";
 
       const match = fullText.match(/\[\[PIEZAS:(.*?)\]\]/);
       if (!match) return;
@@ -41,78 +42,54 @@ export const useChatDOMInjector = (mounted, getPiezas, wp) => {
       const resultado = getPiezas(keyword);
       if (!resultado?.piezas?.length) return;
 
-      // 1. Dejamos que la burbuja original se encargue de mostrar solo el texto del bot.
-      bubble.textContent = botText;
-      
-      // 2. Si el bot no tiene texto que decir, ocultamos la burbuja para que no quede vacía.
+      // 1. Limpiamos el texto de la burbuja nativa (quitamos la etiqueta de la IA)
+      bubble.innerHTML = botText;
       if (!botText) {
-          bubble.style.display = 'none';
+        bubble.style.display = "none";
       }
 
-      const container = bubble.closest(".rcb-bot-message-container");
-      if (!container) return;
+      // 2. CREAMOS UNA ENVOLTURA (WRAPPER) PARA AGRUPAR BURBUJA + PIEZAS
+      const wrapper = document.createElement("div");
+      wrapper.className = "flex flex-col w-full min-w-0";
+      wrapper.style.gap = "8px"; // Separación entre la burbuja y el grid de piezas
 
-      const yaInyectado = container.previousElementSibling?.classList.contains("neto-pieza-inyectada");
+      // Insertamos el wrapper justo donde estaba la burbuja
+      bubble.parentNode.insertBefore(wrapper, bubble);
       
-      if (!yaInyectado) {
-        // 3. Creamos un div para las piezas.
-        const cajaLimpia = document.createElement("div");
-        cajaLimpia.className = "neto-pieza-inyectada w-full mb-1";
-        
-        // 4. LO CLAVE: Insertamos las piezas JUSTO ANTES de la burbuja del texto, 
-        // pero DENTRO del mismo contenedor general donde se pone el nombre.
-        container.parentNode.insertBefore(cajaLimpia, container);
+      // Movemos la burbuja NATIVA dentro de nuestro wrapper
+      // ¡Esto mantiene los avatares, nombres y estilos 100% originales!
+      wrapper.appendChild(bubble);
 
-        const root = createRoot(cajaLimpia);
-        const { piezas, metadata } = resultado;
+      // 3. CREAMOS LA CAJA DE PIEZAS Y LA PONEMOS DEBAJO
+      const cajaPiezas = document.createElement("div");
+      cajaPiezas.className = "w-full pb-2";
+      wrapper.appendChild(cajaPiezas);
 
-        // Renderizamos SOLO las fotos, no el texto
-        root.render(
-            <GridPiezas piezas={piezas} metadata={metadata} wp={wpRef.current} />
-        );
-
-        rootsRef.current.set(cajaLimpia, { root, piezas, metadata });
-        container.classList.add("es-grid-de-piezas");
-      }
+      // 4. Renderizamos el componente React
+      const root = createRoot(cajaPiezas);
+      const { piezas, metadata } = resultado;
+      root.render(<GridPiezas piezas={piezas} metadata={metadata} wp={wpRef.current} />);
+      
+      rootsRef.current.set(cajaPiezas, { root, piezas, metadata });
     });
   }, [getPiezas]);
 
-  const reordenarGridsVivos = useCallback(() => {
-    document.querySelectorAll(".neto-grid-vivo").forEach((grid) => {
-      const parent = grid.parentNode;
-      if (!parent) return;
-
-      let siguiente = grid.nextElementSibling;
-      while (siguiente && !siguiente.classList.contains("rcb-bot-message-container")) {
-        siguiente = siguiente.nextElementSibling;
-      }
-      
-      if (!siguiente) {
-        let anterior = grid.previousElementSibling;
-        while (anterior && !anterior.classList.contains("rcb-bot-message-container")) {
-          anterior = anterior.previousElementSibling;
-        }
-
-        if (anterior) {
-          grid.classList.add("mb-2");
-          anterior.parentNode.insertBefore(grid, anterior);
-        }
-      }
-    });
-  }, []);
-
   const ejecutarInyeccion = useCallback(() => {
     if (!mounted) return;
-
-    inyectarHistorico();
-    reordenarGridsVivos();
-
-    limpiarEtiquetasHuerfanas();
+    
     const config = wpRef.current;
-    inyectarBotonEnviar(config.sendBtnBg || config.headerBg || "#99c355");
+    
+    // 🌟 ORDEN MUY IMPORTANTE:
+    // Primero dejamos que "chatLabels" procese los nombres nativos
     procesarBurbujas(".rcb-bot-message", true, config);
     procesarBurbujas(".rcb-user-message", false, config);
-  }, [mounted, inyectarHistorico, reordenarGridsVivos]);
+
+    // Segundo, envolvemos la burbuja nativa y le metemos las piezas debajo
+    inyectarHistorico();
+
+    limpiarEtiquetasHuerfanas();
+    inyectarBotonEnviar(config.sendBtnBg || "#ffc600");
+  }, [mounted, inyectarHistorico]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -142,8 +119,6 @@ export const useChatDOMInjector = (mounted, getPiezas, wp) => {
           <GridPiezas piezas={piezas} metadata={metadata} wp={wp} />
       );
     });
-
-    inyectarBotonEnviar(wp.sendBtnBg || wp.headerBg || "#99c355");
   }, [wp, mounted]);
 
   useEffect(() => {

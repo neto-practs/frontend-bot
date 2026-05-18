@@ -58,16 +58,16 @@ export const BOT_AVATAR_URL = `data:image/svg+xml;base64,${btoa(_SVG)}`;
 
 // ── buildConfig ───────────────────────────────────────────────────────────────
 export const buildConfig = (wp = {}) => {
-  const primary = wp.headerBg || BRAND.darkGray;
+  const primary = wp.headerBg || BRAND.yellow; // Default YELLOW
 
   return {
     primary,
     accent:           BRAND.yellow,
-    headerTitleColor: wp.headerTitleColor  || BRAND.textLight,
+    headerTitleColor: wp.headerTitleColor  || BRAND.textDark,
     headerTitleText:  wp.headerTitleText   || "Soporte Recambios",
     headerAvatar:     wp.headerAvatar      || "",
     launcherIcon:     wp.launcherIcon      || "",
-    launcherBg:       wp.launcherBg        || BRAND.darkGray,
+    launcherBg:       wp.launcherBg        || BRAND.yellow, // Default YELLOW
 
     userDisplayName:  wp.userDisplayName   || "Tú",
     userBubbleBg:     wp.userBubbleBg      || BRAND.yellow,
@@ -99,32 +99,26 @@ export const buildStyles = (config, isMobile) => {
   const sz = sizes[config.chatSize] || sizes.medium;
 
   return {
-    // ── Cabecera: negro profundo con borde inferior amarillo ───────────────
     headerStyle: {
       background:           BRAND.yellow,
-      color:                config.headerTitleColor,
+      color:                "#000000",
       padding:              "0 16px",
       minHeight:            "84px",
       display:              "flex",
       alignItems:           "center",
       borderTopLeftRadius:  isMobile ? "0" : "20px",
       borderTopRightRadius: isMobile ? "0" : "20px",
-      borderBottom:         `3px solid ${BRAND.yellow}`,
       position:             "relative",
       boxSizing:            "border-box",
       overflow:             "hidden",
     },
 
-    // ── Cuerpo: gris muy claro con patrón sutil ────────────────────────────
     bodyStyle: {
       backgroundColor: config.chatBodyBg,
       flex:            "1",
       overflowY:       "auto",
-      backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px)`,
-      backgroundSize:  "20px 20px",
     },
 
-    // ── Burbuja usuario: amarillo corporativo ──────────────────────────────
     userBubbleStyle: {
       backgroundColor: config.userBubbleBg,
       color:           config.userTextColor,
@@ -132,12 +126,8 @@ export const buildStyles = (config, isMobile) => {
       padding:         "10px 14px",
       maxWidth:        "78%",
       wordBreak:       "break-word",
-      fontWeight:      "500",
-      fontSize:        "14px",
-      boxShadow:       "0 2px 8px rgba(255,198,0,0.25)",
     },
 
-    // ── Burbuja bot: blanco con sombra suave ───────────────────────────────
     botBubbleStyle: {
       backgroundColor: config.botBubbleBg,
       color:           config.botTextColor,
@@ -145,32 +135,8 @@ export const buildStyles = (config, isMobile) => {
       padding:         "10px 14px",
       maxWidth:        "78%",
       wordBreak:       "break-word",
-      fontSize:        "14px",
-      boxShadow:       "0 1px 4px rgba(0,0,0,0.08)",
-      border:          "1px solid rgba(0,0,0,0.06)",
     },
 
-    // ── Opciones (botones rápidos) ─────────────────────────────────────────
-    botOptionStyle: {
-      backgroundColor: "#ffffff",
-      color:           BRAND.textDark,
-      border:          `1.5px solid ${BRAND.yellow}`,
-      borderRadius:    "20px",
-      padding:         "6px 14px",
-      fontSize:        "13px",
-      fontWeight:      "500",
-      cursor:          "pointer",
-      transition:      "all 0.15s ease",
-    },
-    botOptionHoveredStyle: {
-      backgroundColor: BRAND.yellow,
-      color:           BRAND.textDark,
-      border:          `1.5px solid ${BRAND.yellow}`,
-      borderRadius:    "20px",
-      fontWeight:      "600",
-    },
-
-    // ── Input ──────────────────────────────────────────────────────────────
     chatInputContainerStyle: {
       backgroundColor: config.inputContainerBg,
       padding:         "10px 12px",
@@ -190,81 +156,52 @@ export const buildStyles = (config, isMobile) => {
       flex:            "1",
       boxSizing:       "border-box",
       border:          `1.5px solid ${config.inputBorderColor}`,
-      color:           BRAND.textDark,
-      fontWeight:      "400",
     },
     chatInputAreaFocusedStyle: {
       border:     `1.5px solid ${config.inputFocusBorder}`,
       outline:    "none",
-      boxShadow:  `0 0 0 3px ${BRAND.yellowGlow}`,
     },
 
-    // ── Botón enviar (oculto — lo reemplazamos con el nuestro) ────────────
+    // REPARACIÓN DEL BOTÓN DE ENVIAR
     sendButtonStyle: {
-      opacity:   "0",
-      position:  "absolute",
-      width:     "1px",
-      height:    "1px",
-      overflow:  "hidden",
+      backgroundColor: BRAND.yellow,
+      borderRadius: "50%",
+      width: "38px",
+      height: "38px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: "pointer",
+      border: "none",
+      flexShrink: 0,
     },
-    sendButtonHoveredStyle: {},
-
-    // ── Botón cerrar ───────────────────────────────────────────────────────
-    closeChatButtonStyle: {
-      position:        "absolute",
-      top:             "10px",
-      right:           "10px",
-      zIndex:          "9999",
-      display:         "flex",
-      alignItems:      "center",
-      justifyContent:  "center",
-      width:           "36px",
-      height:          "36px",
-      borderRadius:    "50%",
-      cursor:          "pointer",
-      backgroundColor: "rgba(255,255,255,0.08)",
-      transition:      "background 0.2s ease",
-    },
-    closeChatIconStyle: {
-      fill:   config.headerTitleColor,
-      width:  "20px",
-      height: "20px",
+    sendIconStyle: {
+      fill: "#000000",
+      width: "22px",
+      height: "22px",
     },
 
-    // ── Badge notificaciones ───────────────────────────────────────────────
     notificationBadgeStyle: {
       background: config.badgeBg,
       color:      "#fff",
-      fontWeight: "700",
-      fontSize:   "11px",
     },
 
-    // ── Elementos desactivados ─────────────────────────────────────────────
     notificationButtonStyle: { display: "none" },
     audioButtonStyle:        { display: "none" },
     footerStyle:             { display: "none", padding: 0, margin: 0, height: 0 },
 
-    // ── Avatar bot ─────────────────────────────────────────────────────────
     botBubbleAvatarStyle: {
       width:        "34px",
       height:       "34px",
       borderRadius: "50%",
       objectFit:    "cover",
-      border:       `2px solid ${BRAND.yellow}`,
-      boxShadow:    "0 2px 6px rgba(0,0,0,0.2)",
     },
 
-    // ── Botón flotante launcher ────────────────────────────────────────────
     chatButtonStyle: {
-      background:  config.launcherIcon ? "transparent" : BRAND.darkGray,
-      boxShadow:   config.launcherIcon ? "none" : `0 6px 20px rgba(0,0,0,0.35), 0 0 0 3px ${BRAND.yellow}`,
-      border:      config.launcherIcon ? "none" : `2px solid ${BRAND.yellow}`,
-      borderRadius: "50%",
+      background:  BRAND.yellow,
       zIndex:       MAX_Z_INDEX,
-      transition:   "transform 0.2s ease, box-shadow 0.2s ease",
     },
 
-    // ── Ventana del chat ───────────────────────────────────────────────────
     chatWindowStyle: {
       zIndex:        MAX_Z_INDEX,
       display:       "flex",
@@ -284,28 +221,12 @@ export const buildStyles = (config, isMobile) => {
             width:        sz.w,
             height:       sz.h,
             borderRadius: "20px",
-            boxShadow:    "0 20px 60px rgba(0,0,0,0.22), 0 4px 12px rgba(0,0,0,0.12)",
-            border:       `1px solid ${BRAND.darkBorder}`,
+            boxShadow:    "0 20px 60px rgba(0,0,0,0.22)",
           }),
-    },
-
-    // ── Historial "Previous Chat History" ─────────────────────────────────
-    chatHistoryButtonStyle: {
-      backgroundColor: BRAND.yellow,
-      color:           BRAND.textDark,
-      fontWeight:      "600",
-      fontSize:        "13px",
-      borderRadius:    "20px",
-      padding:         "6px 18px",
-      border:          "none",
-    },
-    chatHistoryButtonHoveredStyle: {
-      backgroundColor: BRAND.yellowDark,
     },
   };
 };
 
-// ── buildSettings ─────────────────────────────────────────────────────────────
 export const buildSettings = (config, isMobile) => ({
   device:         { applyMobileOptimizations: false },
   general:        { embedded: false, showFooter: false },
@@ -326,8 +247,8 @@ export const buildSettings = (config, isMobile) => ({
     avatar:     config.headerAvatar || BOT_AVATAR_URL,
   },
   chatButton: {
-  icon: config.launcherIcon || BOT_AVATAR_URL, 
-},
+    icon: config.launcherIcon || BOT_AVATAR_URL, 
+  },
   botBubble: {
     showAvatar:    true,
     showTimestamp: false,

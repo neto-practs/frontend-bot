@@ -188,6 +188,7 @@ const FloatingWidget = () => {
   // FIX: Forzamos el botón de cierre a ser grande y centrado dinámicamente
   useEffect(() => {
     const applyFix = () => {
+      // 1. ARREGLO BOTÓN CIERRE (X)
       const selectors = [
         ".rcb-close-button", 
         "button[aria-label='Close Chat']", 
@@ -218,6 +219,27 @@ const FloatingWidget = () => {
           }
         });
       });
+
+      // 2. ARREGLO BOTÓN ENVIAR (Click Manual)
+      const sendBtn = document.querySelector(".rcb-send-button, button[aria-label='Send Message'], [class*='send-button']");
+      if (sendBtn && !sendBtn.dataset.netoFixed) {
+        sendBtn.dataset.netoFixed = "true";
+        sendBtn.addEventListener("click", (e) => {
+          const input = document.querySelector(".rcb-chat-input, textarea, input[type='text']");
+          if (input && input.value.trim() !== "") {
+            // Simulamos el evento Enter para que la librería procese el envío
+            const event = new KeyboardEvent("keydown", {
+              key: "Enter",
+              code: "Enter",
+              keyCode: 13,
+              which: 13,
+              bubbles: true,
+              cancelable: true
+            });
+            input.dispatchEvent(event);
+          }
+        });
+      }
     };
     
     applyFix();
