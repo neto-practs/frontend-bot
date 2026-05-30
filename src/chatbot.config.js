@@ -137,6 +137,30 @@ export const buildStyles = (config, isMobile) => {
       wordBreak:       "break-word",
     },
 
+    // ==========================================================
+    // NUEVO: ESTILOS DE LOS BOTONES DE OPCIONES / SUGERENCIAS
+    // ==========================================================
+    botOptionStyle: {
+      backgroundColor: "#ffffff",
+      color:           BRAND.textDark,
+      border:          `1px solid ${BRAND.yellow}`,
+      borderRadius:    "8px",
+      padding:         "8px 14px",
+      margin:          "4px",
+      fontWeight:      "600",
+      boxShadow:       "0 1px 3px rgba(0,0,0,0.05)",
+      transition:      "all 0.2s ease-in-out",
+      cursor:          "pointer",
+    },
+    botOptionHoveredStyle: {
+      backgroundColor: BRAND.yellow,
+      color:           BRAND.textDark,
+      border:          `1px solid ${BRAND.yellow}`,
+      transform:       "translateY(-2px)",
+      boxShadow:       "0 4px 10px rgba(255, 198, 0, 0.3)",
+    },
+    // ==========================================================
+
     chatInputContainerStyle: {
       backgroundColor: config.inputContainerBg,
       padding:         "10px 12px",

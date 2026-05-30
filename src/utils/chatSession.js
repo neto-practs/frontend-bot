@@ -12,21 +12,25 @@ const MS_POR_HORA = 1000 * 60 * 60;
  * Controla la caducidad de la sesión del usuario.
  */
 export const gestionarSesionChat = () => {
-  const ahora = Date.now();
-  const inicioSesion = localStorage.getItem(SESSION_KEY);
+  try {
+    const ahora = Date.now();
+    const inicioSesion = localStorage.getItem(SESSION_KEY);
 
-  if (!inicioSesion) {
-    localStorage.setItem(SESSION_KEY, ahora.toString());
-    return;
-  }
+    if (!inicioSesion) {
+      localStorage.setItem(SESSION_KEY, ahora.toString());
+      return;
+    }
 
-  const horasTranscurridas = (ahora - parseInt(inicioSesion, 10)) / MS_POR_HORA;
+    const horasTranscurridas = (ahora - parseInt(inicioSesion, 10)) / MS_POR_HORA;
 
-  if (horasTranscurridas >= HORAS_CADUCIDAD) {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(PIEZAS_KEY);
-    localStorage.removeItem(CONTEXT_KEY);
-    localStorage.setItem(SESSION_KEY, ahora.toString());
+    if (horasTranscurridas >= HORAS_CADUCIDAD) {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(PIEZAS_KEY);
+      localStorage.removeItem(CONTEXT_KEY);
+      localStorage.setItem(SESSION_KEY, ahora.toString());
+    }
+  } catch (e) {
+    console.warn("[ChatBot] No se pudo gestionar la sesión en localStorage (posible modo incógnito).");
   }
 };
 
@@ -67,12 +71,19 @@ export const sanitizeChatHistory = () => {
       const isBlank = content === "" || content === null;
 
       if ((isCorrupt || isBlank) && lastUserInput) {
-        changed = true;
-        return {
-          ...msg,
-          type: "string",
-          content: `[[PIEZAS:${lastUserInput}]]`,
-        };
+        // Antes de inyectar el marcador, comprobamos si esa búsqueda realmente tiene piezas guardadas.
+        // Esto evita el bug de "[[PIEZAS:ni idea]]" cuando no hay piezas.
+        const historialPiezas = JSON.parse(localStorage.getItem(PIEZAS_KEY) || "{}");
+        const tienePiezas = historialPiezas[lastUserInput]?.piezas?.length > 0;
+
+        if (tienePiezas) {
+          changed = true;
+          return {
+            ...msg,
+            type: "string",
+            content: `[[PIEZAS:${lastUserInput}]]`,
+          };
+        }
       }
 
       return msg;

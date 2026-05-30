@@ -70,18 +70,18 @@ export const limpiarEtiquetasHuerfanas = () => {
   });
 };
 
-// 🌟 SOLUCIÓN DEFINITIVA PARA EL BOTÓN (Diseño en el botón nativo)
+// Aplica el diseño personalizado directamente sobre el botón original de la librería.
 export const inyectarBotonEnviar = (colorFondo) => {
   const botonOriginal = document.querySelector(".rcb-send-button");
   if (!botonOriginal) return;
 
-  // Si el botón original ya tiene nuestro avión, no hacemos nada más
+  // Verificamos si el botón ya fue modificado previamente.
   if (botonOriginal.querySelector("#neto-avion")) return;
 
-  // 1. Borramos el icono original feo y metemos el nuestro
+  // Reemplazamos el icono por defecto por nuestro SVG personalizado.
   botonOriginal.innerHTML = ICONO_ENVIAR_SVG;
 
-  // 2. Le damos las clases de Tailwind de forma limpia
+  // Aplicamos las clases de Tailwind para darle estilo y animaciones.
   if (!botonOriginal.classList.contains("neto-send-btn")) {
     botonOriginal.classList.add(
       "neto-send-btn", "flex", "items-center", "justify-center", 
@@ -89,9 +89,7 @@ export const inyectarBotonEnviar = (colorFondo) => {
     );
   }
 
-  // 3. Modificamos su estilo para que sea negro y amarillo.
-  // Es clave que pongamos "position: static" para que no salga volando de la caja
-  // y "outline: none" para que no salga el recuadro azul al hacer clic.
+  // Forzamos los estilos visuales del botón, asegurando que mantenga su posición correcta y no muestre bordes nativos.
   botonOriginal.style.cssText = `
     display: flex !important;
     align-items: center !important;

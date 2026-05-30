@@ -29,6 +29,8 @@ const fetchBotResponse = async (userInput, contextoAnterior) => {
   return response.json();
 };
 
+
+
 /**
  * Helper: Recupera el historial de piezas de la sesión actual (o vacío si caducó).
  * @returns {Object} Un mapa clave-valor con las búsquedas y sus piezas asociadas.
@@ -77,9 +79,13 @@ export const useBotLogic = () => {
 
       if (data.nuevoContexto !== undefined) {
         contextoRef.current = data.nuevoContexto;
-        data.nuevoContexto === ""
-          ? localStorage.removeItem(CONTEXT_KEY)
-          : localStorage.setItem(CONTEXT_KEY, data.nuevoContexto);
+        try {
+          data.nuevoContexto === ""
+            ? localStorage.removeItem(CONTEXT_KEY)
+            : localStorage.setItem(CONTEXT_KEY, data.nuevoContexto);
+        } catch (e) {
+          console.warn("[ChatBot] No se pudo guardar el contexto en localStorage.");
+        }
       }
 
       // Si la IA devuelve una query limpia, la usamos como llave. Si no, el input del usuario.
@@ -90,7 +96,11 @@ export const useBotLogic = () => {
         metadata: data.metadata || null,
       };
 
-      localStorage.setItem(PIEZAS_KEY, JSON.stringify(historialPiezas.current));
+      try {
+        localStorage.setItem(PIEZAS_KEY, JSON.stringify(historialPiezas.current));
+      } catch (e) {
+        console.warn("[ChatBot] No se pudo guardar el historial en localStorage.");
+      }
 
       if (data.respuesta === "ERR_NO_STOCK") {
         return wpConfig.mensajeSinStock || "No hay stock actualmente.";
@@ -99,26 +109,26 @@ export const useBotLogic = () => {
       // Devolvemos la respuesta y la llave para que el Widget sepa qué piezas pintar
       return {
         texto: data.respuesta,
-        llave: llaveMemoria,
+        llave: data.piezas?.length > 0 ? llaveMemoria : null,
         hasPiezas: data.piezas?.length > 0,
+        sugerencias: data.sugerencias || [],
       };
     } catch (error) {
       console.error("[ChatBot] Error:", error.message);
       return "Error de conexión.";
     }
   };
-
-  /**
+  
+/**
    * Recupera de la caché las piezas asociadas a una búsqueda específica.
    *
    * @param {string} userInput - La palabra clave a buscar en la caché.
    * @returns {Object} Array de piezas, o vacío si no hay coincidencias.
    */
   const getPiezas = (userInput) => {
-    // Siempre intentamos leer el último estado (por si acaso el limpiador ha actuado)
     const currentHistorial = getInitialHistorial();
     return currentHistorial[userInput] || { piezas: [], metadata: null };
   };
-
-  return { handleBotMessage, getPiezas };
+// Exportamos las funciones necesarias para usarlas en los componentes.
+return { handleBotMessage, getPiezas };
 };

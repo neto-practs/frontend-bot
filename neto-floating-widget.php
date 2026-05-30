@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Floating Widget
- * Description: Agente de búsqueda conversacional.
- * Version: 3.8
+ * Description: Agente de búsqueda conversacional con sugerencias.
+ * Version: 4.0
  * Author: Saul
  */
 

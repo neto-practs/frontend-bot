@@ -35,13 +35,25 @@ const CustomHeader = ({ title, avatar }) => {
         const chatUrl = window.ChatBotConfig?.backendUrl || import.meta.env.VITE_API_URL || "http://localhost:4000/api/chat";
         const healthUrl = chatUrl.replace("/chat", "/health");
         const res = await fetch(healthUrl, { method: "GET" });
-        setIsOnline(res.ok);
+        // El servidor está activo si responde (200 OK ó 503 DEGRADADO).
+        // Sólo marcamos offline si no hay respuesta en absoluto.
+        if (res.ok) {
+          setIsOnline(true);
+        } else {
+          // 503 con body JSON → el servidor Node funciona pero la API externa falló
+          try {
+            const data = await res.json();
+            setIsOnline(typeof data?.estado === "string"); // tiene campo 'estado' → servidor activo
+          } catch {
+            setIsOnline(false);
+          }
+        }
       } catch {
         setIsOnline(false);
       }
     };
     checkBackend();
-    const interval = setInterval(checkBackend, 15000);
+    const interval = setInterval(checkBackend, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -153,6 +165,7 @@ const FloatingWidget = () => {
   useChatDOMInjector(mounted, getPiezas, wp);
 
   const { lastSearchRef, isLockedRef, justUnlockedVerRef, setLock } = useBotMemory();
+  const sugerenciasRef = useRef([]);
 
   // --- EFECTOS DE MONTAJE Y DOM ---
   useEffect(() => {
@@ -299,8 +312,14 @@ const FloatingWidget = () => {
   };
 
   const handleFreeSearch = async (txt, params) => {
+    // Limpiamos las sugerencias de la búsqueda anterior al iniciar una nueva.
+    sugerenciasRef.current = [];
+
     const prevSearch = lastSearchRef.current;
     const respuestaBackend = await handleBotMessage(params, wp);
+
+    // Almacenamos temporalmente las sugerencias para renderizarlas como opciones.
+    sugerenciasRef.current = typeof respuestaBackend === "object" ? (respuestaBackend.sugerencias || []) : [];
 
     const textoRespuesta = typeof respuestaBackend === "string" ? respuestaBackend : respuestaBackend.texto;
     const llaveMemoria = typeof respuestaBackend === "string" ? txt : respuestaBackend.llave;
@@ -347,9 +366,19 @@ const FloatingWidget = () => {
           if (txt === txtRefinar || txt === txtVer) return null;
           return await handleFreeSearch(txt, params);
         },
-        options: () => {
+        
+        options: (params) => {
           if (isReplayingRef.current) return [];
-          return isLockedRef.current && !ES_PREMIUM ? [txtRefinar, txtVer] : [];
+          if (isLockedRef.current && !ES_PREMIUM) return [txtRefinar, txtVer];
+          
+          // Preparamos las sugerencias dinámicas para los botones.
+          const rawSugerencias = sugerenciasRef.current;
+          sugerenciasRef.current = []; // Reiniciamos la memoria de sugerencias para el siguiente turno.
+
+          // Eliminamos duplicados y restringimos la cantidad máxima de opciones mostradas.
+          const uniqueSugerencias = [...new Set(rawSugerencias)].slice(0, 10);
+          
+          return uniqueSugerencias;
         },
         path: "waitInput",
       },

@@ -9,7 +9,7 @@ const PillLauncher = ({ toggleChat, config }) => {
   const icon       = config?.launcherIcon       || "";
   const arrowColor = bg; 
 
-  // 🚀 ESTADO DEL ANCHO DE PANTALLA
+  // Control del ancho de la ventana para adaptar el diseño.
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
@@ -18,20 +18,23 @@ const PillLauncher = ({ toggleChat, config }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 🟢 ESTADO ONLINE/OFFLINE — ping al backend cada 15 segundos
+  // Control del estado de conexión con el backend.
   const [isOnline, setIsOnline] = useState(false);
 
-  // 🟢🔴 LÓGICA DE PING AL BACKEND (FALSO MENSAJE)
+  // Comprobamos periódicamente si el servidor responde.
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        // 1º Intenta coger la de WordPress, 2º coge la del .env de Vite
+        // Obtenemos la URL de la API desde la configuración o las variables de entorno.
         const backendUrl = window.ChatBotConfig?.backendUrl || import.meta.env.VITE_API_URL;
         
-        // Hacemos el ping simulando ser el chat
+        // Enviamos una petición de prueba para verificar la disponibilidad.
         const respuesta = await fetch(backendUrl, { 
           method: "POST", 
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "api-key": window.ChatBotConfig?.backendApiKey || import.meta.env.VITE_API_KEY || ""
+          },
           body: JSON.stringify({ 
             message: "ping_interno_ignorar", 
             reqId: "ping-test" 
@@ -47,29 +50,29 @@ const PillLauncher = ({ toggleChat, config }) => {
     };
     
     checkBackend();
-    const interval = setInterval(checkBackend, 60000); // Comprueba cada 15 segundos
+    const interval = setInterval(checkBackend, 60000); // Comprueba cada 60 segundos
     return () => clearInterval(interval);
   }, []);
 
-  // CÁLCULO DE TRAMOS
+  // Puntos de ruptura para los distintos tamaños de pantalla.
   const isMobile = windowWidth < MOBILE_BP;
   const isMedium = windowWidth <= 425;
   const isSmall  = windowWidth <= 375;
   const isTiny   = windowWidth <= 320;
 
-  // 📏 REDUCCIÓN EXTREMA DE TAMAÑOS (Especialmente en isMedium/425px)
+  // Ajustes de tamaño y espaciado para pantallas pequeñas.
   const posMargin  = isTiny ? "4px"  : isSmall ? "6px"  : isMedium ? "8px"  : isMobile ? "12px" : "24px";
   const btnGap     = isTiny ? "4px"  : isSmall ? "5px"  : isMedium ? "6px"  : isMobile ? "8px"  : "12px";
   const btnPadding = isTiny ? "2px 6px 2px 2px" : isSmall ? "2px 8px 2px 2px" : isMedium ? "3px 8px 3px 3px" : isMobile ? "4px 10px 4px 4px" : "6px 12px 6px 6px";
   
-  // Avatares minúsculos
+  // Ajuste del tamaño del avatar según la pantalla.
   const avatarSize = isTiny ? "22px" : isSmall ? "26px" : isMedium ? "28px" : isMobile ? "32px" : "48px";
   
-  // Fuentes al mínimo legal para que siga siendo legible
+  // Ajuste dinámico del tamaño de las fuentes.
   const titleSize  = isTiny ? "10px" : isSmall ? "11px" : isMedium ? "12px" : isMobile ? "13px" : "15px";
   const subSize    = isTiny ? "8px"  : isSmall ? "9px"  : isMedium ? "10px" : isMobile ? "11px" : "13px";
   
-  // Círculo de la flecha tipo "puntito"
+  // Tamaño del indicador circular y la flecha.
   const circleSize = isTiny ? "16px" : isSmall ? "18px" : isMedium ? "20px" : isMobile ? "22px" : "28px";
   const arrowSize  = isTiny ? "8"    : isSmall ? "10"   : isMedium ? "10"   : isMobile ? "12"   : "16";
 

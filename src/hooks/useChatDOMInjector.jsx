@@ -28,25 +28,25 @@ export const useChatDOMInjector = (mounted, getPiezas, wp) => {
         return;
       }
 
-      if (!fullText.includes("[[PIEZAS:")) return;
-
-      // Marcamos esta burbuja nativa como procesada por nuestro inyector de piezas
-      bubble.dataset.netoPiecesInjected = "true";
-
       const match = fullText.match(/\[\[PIEZAS:(.*?)\]\]/);
       if (!match) return;
 
       const keyword = match[1].trim();
-      const botText = fullText.split("]]").slice(1).join("]]").trim();
+      
+      // 1. Limpiamos el texto de la burbuja nativa quitando TODOS los marcadores [[PIEZAS:...]]
+      // Esto previene que se vean si por error hay duplicados.
+      const botText = fullText.replace(/\[\[PIEZAS:.*?\]\]/g, "").trim();
+      
+      bubble.innerHTML = botText;
+      if (!botText) {
+        bubble.style.setProperty("display", "none", "important");
+      }
+
+      // Marcamos esta burbuja nativa como procesada por nuestro inyector de piezas
+      bubble.dataset.netoPiecesInjected = "true";
 
       const resultado = getPiezas(keyword);
       if (!resultado?.piezas?.length) return;
-
-      // 1. Limpiamos el texto de la burbuja nativa (quitamos la etiqueta de la IA)
-      bubble.innerHTML = botText;
-      if (!botText) {
-        bubble.style.display = "none";
-      }
 
       // 2. CREAMOS UNA ENVOLTURA (WRAPPER) PARA AGRUPAR BURBUJA + PIEZAS
       const wrapper = document.createElement("div");
