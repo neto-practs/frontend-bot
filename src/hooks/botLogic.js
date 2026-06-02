@@ -101,17 +101,22 @@ export const useBotLogic = () => {
         console.warn("[ChatBot] No se pudo guardar el historial en localStorage.");
       }
 
-      if (data.respuesta === "ERR_NO_STOCK") {
-        return wpConfig.mensajeSinStock || "No hay stock actualmente.";
+      let textoFinal = data.respuesta;
+
+      if (textoFinal === "ERR_NO_STOCK") {
+        textoFinal = wpConfig.mensajeSinStock || "No hay stock actualmente.";
+      } else if (textoFinal === "TRIGGER_WHATSAPP") {
+        textoFinal = "Claro! Te pongo en contacto con el equipo de soporte: [[WHATSAPP]]";
       }
 
-      if (data.respuesta === "TRIGGER_WHATSAPP") {
-        data.respuesta = "Claro! Te pongo en contacto con el equipo de soporte: [[WHATSAPP]]";
+      // Si el backend nos pide explícitamente mostrar WhatsApp, añadimos el trigger
+      if (data.pedirWhatsapp && !textoFinal.includes("[[WHATSAPP]]")) {
+        textoFinal += " [[WHATSAPP]]";
       }
 
       // Devolvemos la respuesta y la llave para que el Widget sepa qué piezas pintar
       return {
-        texto: data.respuesta,
+        texto: textoFinal,
         llave: data.piezas?.length > 0 ? llaveMemoria : null,
         hasPiezas: data.piezas?.length > 0,
         sugerencias: data.sugerencias || [],
