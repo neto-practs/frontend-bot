@@ -1,15 +1,26 @@
-Actúa como un desarrollador Frontend Senior experto en CSS.
+# 🛠️ Tarea Frontend Full-Stack: Parche de Seguridad y Nuevas Analíticas (Badge Clicks)
 
-En mi proyecto con `react-chatbotify`, logramos colocar el botón de cerrar chat en la esquina superior derecha usando `position: absolute`. Sin embargo, ha surgido un nuevo problema visual con la alineación interna del botón.
+## 1. Parche de Seguridad Crítico (Borrar Log)
+En nuestro archivo `src/hooks/botLogic.js`, dentro de la función `fetchBotResponse`, dejamos un `console.log` olvidado de la fase de pruebas que está imprimiendo la llave de autenticación en el navegador del cliente. 
 
-EL PROBLEMA:
-El icono visual de la "X" (el elemento SVG) NO está centrado dentro de su propia área interactiva/clickeable (el círculo que cambia de color al hacer hover). La "X" se ve desplazada hacia un lado en lugar de estar en el centro geométrico perfecto del botón.
+**Acción requerida:** 
+Busca y elimina INMEDIATAMENTE la línea exacta que dice: `console.log("LLAVE QUE ENVÍO AL SERVIDOR:", API_KEY);` (o similar) para evitar exponer credenciales.
 
-LO QUE NECESITO:
-Necesito que me des la regla de CSS puro (para añadir a mi `index.css` o inyectar globalmente) que arregle esta alineación interna sin mover el botón de la esquina superior derecha.
+## 2. Nueva Feature: Tracking de Apertura del Chat
+Ya tenemos implementado un sistema exitoso para medir los clics en el botón de compra (con React enviando datos a nuestro plugin de PHP en WordPress). Ahora queremos medir el primer paso del embudo: **Cuántas veces se hace clic en el badge para abrir el chatbot**.
 
-REQUISITOS TÉCNICOS:
-1. Apunta a la clase nativa correcta de `react-chatbotify` (usualmente `.rcb-close-button`).
-2. Aplica las propiedades necesarias (por ejemplo: `display: flex`, `align-items: center`, `justify-content: center`, o resetea el `padding`/`margin`) para que el hijo SVG se centre milimétricamente dentro de su contenedor interactivo.
-3. Utiliza `!important` si es estrictamente necesario para sobreescribir el comportamiento por defecto de la librería.
-4. NO modifiques el `position: absolute` ni las coordenadas `top` / `right` que ya lo mantienen en la esquina. Concéntrate solo en centrar el SVG *dentro* del botón.
+**Requisitos exactos:**
+- **Sin límites ni enfriamiento:** Al igual que el botón de compra, cada vez que se haga clic para abrir el chat, debe contar. No pongas debounce ni cooldown.
+- **Diferenciación de métricas:** La base de datos/opciones de WordPress debe poder diferenciar entre "Clics de Compra" y "Clics de Apertura de Chat".
+
+## 3. Tu Misión
+Actúa como Lead Full-Stack Developer. Dame el código exacto para actualizar los siguientes puntos:
+
+1. **En React (`FloatingWidget.jsx` o donde inicializamos `react-chatbotify`):** 
+   Utiliza el evento adecuado de la librería (por ejemplo, detectar el cambio de estado de minimizado a abierto, o eventos como `onToggle`/`onOpen`) para lanzar la petición `fetch` a nuestro endpoint de WordPress. Asegúrate de enviar un `payload` que identifique esta acción (ej. `{ type: 'badge_open' }`).
+2. **En PHP (Endpoint REST):** 
+   Actualiza la función que recibe el AJAX/Fetch para que acepte este nuevo tipo de métrica y sume +1 al contador de "Aperturas" en la base de datos o en `wp_options`.
+3. **En PHP (Panel de Admin):** 
+   Actualiza la vista del dashboard de WordPress para que, además de las compras, muestre esta nueva estadística de "Chats Abiertos".
+
+Por favor, revisa cómo nombramos el endpoint actual en PHP y muéstrame los fragmentos de código exactos que debo sustituir o añadir en ambos lados (React y PHP).

@@ -264,6 +264,22 @@ const FloatingWidget = () => {
   const toggleChat = useCallback(() => {
     const hiddenBtn = document.querySelector(".rcb-toggle-button");
     if (hiddenBtn) hiddenBtn.click();
+
+    // Trackear apertura del chat sin debounce ni límites
+    const wpConfig = window.ChatBotConfig || {};
+    const restUrl = wpConfig.restUrl;
+    const nonce = wpConfig.restNonce;
+
+    if (restUrl && nonce) {
+      fetch(restUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-WP-Nonce": nonce,
+        },
+        body: JSON.stringify({ action_type: "badge_open" })
+      }).catch(console.error);
+    }
   }, []);
 
   // --- CONFIGURACIÓN E INYECCIÓN EN REACT-CHATBOTIFY ---
@@ -323,6 +339,10 @@ const FloatingWidget = () => {
 
     const textoRespuesta = typeof respuestaBackend === "string" ? respuestaBackend : respuestaBackend.texto;
     const llaveMemoria = typeof respuestaBackend === "string" ? txt : respuestaBackend.llave;
+
+    if (textoRespuesta.includes("[[WHATSAPP]]")) {
+      return textoRespuesta;
+    }
 
     lastSearchRef.current = llaveMemoria;
     const resultado = getPiezas(llaveMemoria);

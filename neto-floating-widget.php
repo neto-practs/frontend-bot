@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Floating Widget
- * Description: Agente de búsqueda conversacional con sugerencias.
- * Version: 4.0
+ * Description: Agente de búsqueda conversacional clics + whatshApp
+ * Version: 4.3
  * Author: Saul
  */
 
@@ -157,6 +157,7 @@ function nfw_settings_init() {
 
         nfw_add_field('backendUrl', 'URL del Backend', 'text', 'nfw_section_api', 'https://api.midominio.com/api/chat');
         nfw_add_field('backendApiKey', 'Tu Clave de Acceso (API Key)', 'text', 'nfw_section_api', '');
+        nfw_add_field('whatsappNumber', 'Número de WhatsApp (con prefijo, ej: 34600111222)', 'text', 'nfw_section_api', '');
 
     } catch (\Throwable $e) {
         //Atrapa errores 
@@ -166,6 +167,35 @@ function nfw_settings_init() {
 
 add_action('admin_init', 'nfw_settings_init');
 
+
+// INICIO DE REST API Y ESTADÍSTICAS
+function nfw_register_rest_endpoints() {
+    register_rest_route('neto-bot/v1', '/track-click', array(
+        'methods' => 'POST',
+        'callback' => 'nfw_track_click_callback',
+        'permission_callback' => function () {
+            // Verificamos el nonce por seguridad
+            $nonce = isset($_SERVER['HTTP_X_WP_NONCE']) ? sanitize_text_field($_SERVER['HTTP_X_WP_NONCE']) : '';
+            return wp_verify_nonce($nonce, 'wp_rest');
+        }
+    ));
+}
+add_action('rest_api_init', 'nfw_register_rest_endpoints');
+
+function nfw_track_click_callback(WP_REST_Request $request) {
+    $body = $request->get_json_params();
+    $action_type = isset($body['action_type']) ? sanitize_text_field($body['action_type']) : 'compra';
+
+    if ($action_type === 'badge_open') {
+        $current_opens = (int) get_option('neto_chatbot_opens', 0);
+        update_option('neto_chatbot_opens', $current_opens + 1);
+        return rest_ensure_response(array('success' => true, 'total_opens' => $current_opens + 1));
+    } else {
+        $current_clicks = (int) get_option('neto_chatbot_clicks', 0);
+        update_option('neto_chatbot_clicks', $current_clicks + 1);
+        return rest_ensure_response(array('success' => true, 'total' => $current_clicks + 1));
+    }
+}
 
 // FUNCIONES DE RENDERIZADO UI
 function nfw_section_images_desc() {
@@ -226,9 +256,19 @@ function nfw_render_field($args) {
 
 function nfw_settings_page_html() {
     if (!current_user_can('manage_options')) return;
+    
+    $total_clicks = (int) get_option('neto_chatbot_clicks', 0);
+    $total_opens = (int) get_option('neto_chatbot_opens', 0);
     ?>
     <div class="wrap">
         <h1>Configuración visual del Chatbot</h1>
+        
+        <div style="background: #fff; border-left: 4px solid #99c355; box-shadow: 0 1px 1px rgba(0,0,0,.04); padding: 1px 12px; margin: 20px 0;">
+            <p><strong>Estadísticas del Chatbot:</strong></p>
+            <p style="font-size: 16px;">Clics para el carrito: <span style="font-weight: bold; padding: 2px 8px; background: #eee; border-radius: 4px;"><?php echo esc_html($total_clicks); ?></span></p>
+            <p style="font-size: 16px;">Clics en el chatbot: <span style="font-weight: bold; padding: 2px 8px; background: #eee; border-radius: 4px;"><?php echo esc_html($total_opens); ?></span></p>
+        </div>
+
         <p>Desde aquí puedes cambiar todos los colores y textos del chat sin tocar código.</p>
         <form action="options.php" method="post">
             <?php
@@ -308,7 +348,10 @@ function nfw_load_files() {
                 'optionsBtnHoverBg'=> nfw_get_val($options, 'optionsBtnHoverBg', '#f3f4f6'),
                 'siteURL'          => site_url(),
                 'backendUrl'       => nfw_get_val($options, 'backendUrl', 'http://localhost:4000/api/chat'),
-                'backendApiKey'    => nfw_get_val($options, 'backendApiKey', '')
+                'backendApiKey'    => nfw_get_val($options, 'backendApiKey', ''),
+                'whatsappNumber'   => nfw_get_val($options, 'whatsappNumber', ''),
+                'restUrl'          => rest_url('neto-bot/v1/track-click'),
+                'restNonce'        => wp_create_nonce('wp_rest')
             );
 
             wp_localize_script('nfw-js', 'ChatBotConfig', $react_config);

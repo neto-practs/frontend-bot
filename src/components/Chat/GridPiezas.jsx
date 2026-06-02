@@ -2,6 +2,22 @@ import PriceDisplay from "./PriceDisplay";
 
 const FALLBACK_IMAGE = "https://via.placeholder.com/150x100?text=Sin+Imagen";
 
+// Helper global para el tracking
+const trackClick = (config) => {
+  const restUrl = config?.restUrl;
+  const nonce = config?.restNonce;
+
+  if (restUrl && nonce) {
+    fetch(restUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-WP-Nonce": nonce,
+      },
+    }).catch(console.error);
+  }
+};
+
 /**
  * Componente TarjetaPieza
  * Dibuja una única "caja" con la foto, el título, el precio y el botón de un producto.
@@ -37,6 +53,7 @@ export const TarjetaPieza = ({ pieza, wp = {} }) => {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackClick(config)}
           className="mt-auto w-full block text-[13px] px-2 py-2 rounded text-center font-bold hover:opacity-90 transition-opacity box-border"
           style={{ 
             backgroundColor: colorBoton,  
@@ -85,6 +102,7 @@ const GridPiezas = ({ piezas, metadata, wp = {} }) => {
             href={urlWeb}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackClick(config)}
             className="block text-center text-[13px] font-bold border rounded py-3 transition-colors duration-200 w-full shadow-sm"
             style={{
               backgroundColor: "transparent",

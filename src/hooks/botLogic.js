@@ -11,7 +11,6 @@ import { gestionarSesionChat } from "../utils/chatSession";
  * @throws {Error} Si la conexión falla o el servidor devuelve un status != 200.
  */
 const fetchBotResponse = async (userInput, contextoAnterior) => {
-  console.log("LLAVE QUE ENVÍO AL SERVIDOR:", API_KEY); 
   const response = await fetch(API_URL, {
     method: "POST",
     headers: {
@@ -104,6 +103,10 @@ export const useBotLogic = () => {
 
       if (data.respuesta === "ERR_NO_STOCK") {
         return wpConfig.mensajeSinStock || "No hay stock actualmente.";
+      }
+
+      if (data.respuesta === "TRIGGER_WHATSAPP") {
+        data.respuesta = "Claro! Te pongo en contacto con el equipo de soporte: [[WHATSAPP]]";
       }
 
       // Devolvemos la respuesta y la llave para que el Widget sepa qué piezas pintar

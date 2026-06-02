@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import GridPiezas from "../components/Chat/GridPiezas";
+import WhatsAppCard from "../components/Chat/WhatsAppCard";
 import {
   limpiarEtiquetasHuerfanas,
   inyectarBotonEnviar,
@@ -25,6 +26,31 @@ export const useChatDOMInjector = (mounted, getPiezas, wp) => {
 
       if (fullText === "[object Object]") {
         bubble.style.setProperty("display", "none", "important");
+        return;
+      }
+
+      // Check for WHATSAPP trigger first
+      if (fullText.includes("[[WHATSAPP]]")) {
+        const botText = fullText.replace(/\[\[WHATSAPP\]\]/g, "").trim();
+        bubble.innerHTML = botText;
+        if (!botText) {
+          bubble.style.setProperty("display", "none", "important");
+        }
+        bubble.dataset.netoPiecesInjected = "true";
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "flex flex-col w-full min-w-0";
+        wrapper.style.gap = "8px";
+        bubble.parentNode.insertBefore(wrapper, bubble);
+        wrapper.appendChild(bubble);
+
+        const cajaWhatsApp = document.createElement("div");
+        cajaWhatsApp.className = "w-full pb-2";
+        wrapper.appendChild(cajaWhatsApp);
+
+        const root = createRoot(cajaWhatsApp);
+        root.render(<WhatsAppCard phoneNumber={wpRef.current?.whatsappNumber || ""} wp={wpRef.current} />);
+        rootsRef.current.set(cajaWhatsApp, { root, type: "whatsapp" });
         return;
       }
 
@@ -70,7 +96,7 @@ export const useChatDOMInjector = (mounted, getPiezas, wp) => {
       const { piezas, metadata } = resultado;
       root.render(<GridPiezas piezas={piezas} metadata={metadata} wp={wpRef.current} />);
       
-      rootsRef.current.set(cajaPiezas, { root, piezas, metadata });
+      rootsRef.current.set(cajaPiezas, { root, type: "piezas", piezas, metadata });
     });
   }, [getPiezas]);
 
@@ -114,10 +140,12 @@ export const useChatDOMInjector = (mounted, getPiezas, wp) => {
   useEffect(() => {
     if (!mounted || !wp) return;
 
-    rootsRef.current.forEach(({ root, piezas, metadata }) => {
-      root.render(
-          <GridPiezas piezas={piezas} metadata={metadata} wp={wp} />
-      );
+    rootsRef.current.forEach(({ root, type, piezas, metadata }) => {
+      if (type === "piezas") {
+        root.render(<GridPiezas piezas={piezas} metadata={metadata} wp={wp} />);
+      } else if (type === "whatsapp") {
+        root.render(<WhatsAppCard phoneNumber={wp.whatsappNumber || ""} wp={wp} />);
+      }
     });
   }, [wp, mounted]);
 
