@@ -7,7 +7,7 @@ const PillLauncher = ({ toggleChat, config }) => {
   const title      = config?.launcherTitle      || "Hola, soy Neto";
   const text       = config?.launcherText       || "¿Te ayudo a encontrar tu pieza?";
   const icon       = config?.launcherIcon       || "";
-  const arrowColor = bg; 
+  const arrowColor = config?.launcherArrowColor || "#000000"; 
 
   // Control del ancho de la ventana para adaptar el diseño.
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);

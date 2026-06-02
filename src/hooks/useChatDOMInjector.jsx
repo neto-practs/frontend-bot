@@ -114,7 +114,7 @@ export const useChatDOMInjector = (mounted, getPiezas, wp) => {
     inyectarHistorico();
 
     limpiarEtiquetasHuerfanas();
-    inyectarBotonEnviar(config.sendBtnBg || "#ffc600");
+    inyectarBotonEnviar(config.sendBtnBg || "#ffc600", "#ffffff");
   }, [mounted, inyectarHistorico]);
 
   useEffect(() => {

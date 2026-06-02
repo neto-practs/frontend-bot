@@ -12,52 +12,10 @@ if (!defined('ABSPATH')) exit;
 function nfw_admin_scripts($hook) {
     if ('toplevel_page_nfw-config' !== $hook) return;
 
-    wp_enqueue_media();
-
     // Sintaxis Heredoc limpia
     $custom_js = <<<JS
         jQuery(document).ready(function($){
-            // BOTÓN SELECCIONAR DE LA BIBLIOTECA
-            $(document).on('click', '.nfw-upload-button', function(e) {
-                e.preventDefault();
-                var button = $(this);
-                var id = button.data('id');
-                var uploader = wp.media({
-                    title: 'Seleccionar o Subir Imagen',
-                    button: { text: 'Usar esta imagen' },
-                    multiple: false
-                }).on('select', function() {
-                    var attachment = uploader.state().get('selection').first().toJSON();
-                    $('#' + id).val(attachment.url); 
-                    $('#preview-' + id).attr('src', attachment.url).show(); 
-                }).open();
-            });
-
-            // BOTÓN VISUALIZAR (Para URLs manuales)
-            $(document).on('click', '.nfw-preview-trigger', function(e) {
-                e.preventDefault();
-                var id = $(this).data('id');
-                var url = $('#' + id).val();
-                if(url) {
-                    $('#preview-' + id).attr('src', url).one('load', function() {
-                        $(this).show();
-                    }).one('error', function() {
-                        alert('La URL no parece ser una imagen válida.');
-                    });
-                } else {
-                    alert('Por favor, introduce una URL primero.');
-                }
-            });
-
-            // LÓGICA BOTÓN RESTABLECER IMÁGENES
-            $(document).on('click', '#nfw-reset-images-btn', function(e) {
-                e.preventDefault();
-                if(confirm('¿Estás seguro de que quieres quitar las imágenes y volver al diseño por defecto?')) {
-                    $('#launcherIcon, #headerAvatar').val('');
-                    $('#preview-launcherIcon, #preview-headerAvatar').hide().attr('src', '');
-                    $('#submit').click();
-                }
-            });
+            // Sin funcionalidad de imágenes — sección eliminada
         });
 JS;
 
@@ -99,9 +57,8 @@ function nfw_settings_init() {
         add_settings_section('nfw_section_bubbles', '3. Textos y Burbujas de Conversación', null, 'nfw-config');
         add_settings_section('nfw_section_appearance', '4. Fondos y Detalles Secundarios', null, 'nfw-config');
         add_settings_section('nfw_section_input', '5. Controles Inferiores (Caja de Texto y Enviar)', null, 'nfw-config');
-        add_settings_section('nfw_section_images', '6. Logos e Imágenes personalizadas', 'nfw_section_images_desc', 'nfw-config');
-        add_settings_section('nfw_section_cards', '7. Tarjetas de Productos', null, 'nfw-config');
-        add_settings_section('nfw_section_api', '8. Conexión al Servidor Inteligente', null, 'nfw-config');
+        add_settings_section('nfw_section_cards', '6. Tarjetas de Productos', null, 'nfw-config');
+        add_settings_section('nfw_section_api', '7. Conexión al Servidor Inteligente', null, 'nfw-config');
 
         nfw_add_field('headerBg', 'Color de la Cabecera (Franja superior del chat)', 'color', 'nfw_section_header', '#99c355');
         nfw_add_field('headerTitleColor', 'Color del título en la cabecera', 'color', 'nfw_section_header', '#ffffff');
@@ -138,9 +95,6 @@ function nfw_settings_init() {
         nfw_add_field('inputFocusBorder', 'Color del borde al hacer clic para teclear (Efecto resaltado)', 'color', 'nfw_section_input', '#99c355');
         nfw_add_field('sendBtnBg', 'Color del botón de Enviar (Icono del avión)', 'color', 'nfw_section_input', '#99c355');
         nfw_add_field('badgeBg', 'Color de las notificaciones (Círculo con el número de mensajes no leídos)', 'color', 'nfw_section_input', '#ff0000');
-
-        nfw_add_field('launcherIcon', 'Icono del botón flotante', 'image', 'nfw_section_images', '' );
-        nfw_add_field('headerAvatar', 'Foto del Bot en la cabecera', 'image',  'nfw_section_images', '');
 
         nfw_add_field('buyBtnText', 'Texto del botón de compra', 'text', 'nfw_section_cards', '🛒 Comprar');
         nfw_add_field('buyBtnBg', 'Color de fondo del botón de compra', 'color', 'nfw_section_cards', '#99c355');
@@ -197,11 +151,7 @@ function nfw_track_click_callback(WP_REST_Request $request) {
     }
 }
 
-// FUNCIONES DE RENDERIZADO UI
-function nfw_section_images_desc() {
-    echo '<p style="margin-bottom:15px;">Si quieres que el chatbot vuelva a tener su aspecto original (sin imágenes personalizadas), pulsa este botón:</p>';
-    echo '<button type="button" id="nfw-reset-images-btn" class="button button-secondary" style="color: #d63638; border-color: #d63638;">Restablecer imágenes por defecto</button>';
-}
+
 
 function nfw_add_field($id, $title, $type, $section, $default, $choices = array()) {
     add_settings_field($id, $title, 'nfw_render_field', 'nfw-config', $section, array('label_for' => $id, 'type' => $type, 'default' => $default, 'choices' => $choices));
@@ -334,8 +284,6 @@ function nfw_load_files() {
                 'inputBorderColor' => nfw_get_val($options, 'inputBorderColor', '#eeeeee'),
                 'labelColor'       => nfw_get_val($options, 'labelColor', '#65676b'),
                 'timestampColor'   => nfw_get_val($options, 'timestampColor', '#656565'),
-                'launcherIcon'     => nfw_get_val($options, 'launcherIcon', ''),
-                'headerAvatar'     => nfw_get_val($options, 'headerAvatar', ''),
                 'buyBtnText'       => nfw_get_val($options, 'buyBtnText', '🛒 Comprar'),
                 'buyBtnBg'         => nfw_get_val($options, 'buyBtnBg', '#99c355'),  
                 'viewMoreBtnText'  => nfw_get_val($options, 'viewMoreBtnText', 'Ver las {total} opciones'), 

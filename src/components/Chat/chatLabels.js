@@ -71,7 +71,7 @@ export const limpiarEtiquetasHuerfanas = () => {
 };
 
 // Aplica el diseño personalizado directamente sobre el botón original de la librería.
-export const inyectarBotonEnviar = (colorFondo) => {
+export const inyectarBotonEnviar = (colorFondo, colorIcono) => {
   const botonOriginal = document.querySelector(".rcb-send-button");
   if (!botonOriginal) return;
 
@@ -89,6 +89,9 @@ export const inyectarBotonEnviar = (colorFondo) => {
     );
   }
 
+  const bgColor = colorFondo || "#ffc600";
+  const iconColor = colorIcono || "#ffffff";
+
   // Forzamos los estilos visuales del botón, asegurando que mantenga su posición correcta y no muestre bordes nativos.
   botonOriginal.style.cssText = `
     display: flex !important;
@@ -98,8 +101,8 @@ export const inyectarBotonEnviar = (colorFondo) => {
     height: 40px !important;
     min-width: 40px !important;
     border-radius: 50% !important;
-    background-color: #111111 !important;
-    color: ${colorFondo || "#ffc600"} !important;
+    background-color: ${bgColor} !important;
+    color: ${iconColor} !important;
     border: none !important;
     cursor: pointer !important;
     position: static !important;

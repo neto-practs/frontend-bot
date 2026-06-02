@@ -58,33 +58,39 @@ export const BOT_AVATAR_URL = `data:image/svg+xml;base64,${btoa(_SVG)}`;
 
 // ── buildConfig ───────────────────────────────────────────────────────────────
 export const buildConfig = (wp = {}) => {
-  const primary = wp.headerBg || BRAND.yellow; // Default YELLOW
+  const primary = wp.headerBg || BRAND.yellow;
 
   return {
     primary,
-    accent:           BRAND.yellow,
-    headerTitleColor: wp.headerTitleColor  || BRAND.textDark,
-    headerTitleText:  wp.headerTitleText   || "Soporte Recambios",
-    headerAvatar:     wp.headerAvatar      || "",
-    launcherIcon:     wp.launcherIcon      || "",
-    launcherBg:       wp.launcherBg        || BRAND.yellow, // Default YELLOW
+    accent:             BRAND.yellow,
+    headerTitleColor:   wp.headerTitleColor    || BRAND.textDark,
+    headerTitleText:    wp.headerTitleText     || "Soporte Recambios",
+    headerAvatar:       wp.headerAvatar        || "",
+    launcherIcon:       wp.launcherIcon        || "",
+    launcherBg:         wp.launcherBg          || BRAND.yellow,
+    launcherArrowColor: wp.launcherArrowColor  || "#000000",
 
-    userDisplayName:  wp.userDisplayName   || "Tú",
-    userBubbleBg:     wp.userBubbleBg      || BRAND.yellow,
-    userTextColor:    wp.userTextColor     || BRAND.textDark,
+    userDisplayName:    wp.userDisplayName     || "Tú",
+    userBubbleBg:       wp.userBubbleBg        || BRAND.yellow,
+    userTextColor:      wp.userTextColor       || BRAND.textDark,
 
-    botBubbleBg:      wp.botBubbleBg       || "#ffffff",
-    botTextColor:     wp.botTextColor      || BRAND.textDark,
+    botBubbleBg:        wp.botBubbleBg         || "#ffffff",
+    botTextColor:       wp.botTextColor        || BRAND.textDark,
 
-    inputBoxBg:       wp.inputBoxBg        || BRAND.offWhite,
-    inputFocusBorder: wp.inputFocusBorder  || BRAND.yellow,
-    sendBtnBg:        wp.sendBtnBg         || BRAND.yellow,
-    inputContainerBg: wp.inputContainerBg  || "#ffffff",
-    inputBorderColor: wp.inputBorderColor  || BRAND.border,
+    inputBoxBg:         wp.inputBoxBg          || BRAND.offWhite,
+    inputFocusBorder:   wp.inputFocusBorder    || BRAND.yellow,
+    sendBtnBg:          wp.sendBtnBg           || BRAND.yellow,
+    inputContainerBg:   wp.inputContainerBg    || "#ffffff",
+    inputBorderColor:   wp.inputBorderColor    || BRAND.border,
 
-    badgeBg:          wp.badgeBg           || "#EF4444",
-    chatBodyBg:       wp.chatBodyBg        || BRAND.lightGray,
-    chatSize:         wp.chatSize          || "medium",
+    badgeBg:            wp.badgeBg             || "#EF4444",
+    chatBodyBg:         wp.chatBodyBg          || BRAND.lightGray,
+    chatSize:           wp.chatSize            || "medium",
+
+    optionsBtnBg:       wp.optionsBtnBg        || "#ffffff",
+    optionsBtnColor:    wp.optionsBtnColor     || BRAND.textDark,
+    optionsBtnBorder:   wp.optionsBtnBorder    || BRAND.yellow,
+    optionsBtnHoverBg:  wp.optionsBtnHoverBg   || BRAND.yellow,
   };
 };
 
@@ -100,8 +106,8 @@ export const buildStyles = (config, isMobile) => {
 
   return {
     headerStyle: {
-      background:           BRAND.yellow,
-      color:                "#000000",
+      background:           config.primary,
+      color:                config.headerTitleColor,
       padding:              "0 16px",
       minHeight:            "84px",
       display:              "flex",
@@ -141,9 +147,9 @@ export const buildStyles = (config, isMobile) => {
     // NUEVO: ESTILOS DE LOS BOTONES DE OPCIONES / SUGERENCIAS
     // ==========================================================
     botOptionStyle: {
-      backgroundColor: "#ffffff",
-      color:           BRAND.textDark,
-      border:          `1px solid ${BRAND.yellow}`,
+      backgroundColor: config.optionsBtnBg,
+      color:           config.optionsBtnColor,
+      border:          `1px solid ${config.optionsBtnBorder}`,
       borderRadius:    "8px",
       padding:         "8px 14px",
       margin:          "4px",
@@ -153,11 +159,11 @@ export const buildStyles = (config, isMobile) => {
       cursor:          "pointer",
     },
     botOptionHoveredStyle: {
-      backgroundColor: BRAND.yellow,
-      color:           BRAND.textDark,
-      border:          `1px solid ${BRAND.yellow}`,
+      backgroundColor: config.optionsBtnHoverBg,
+      color:           config.optionsBtnColor,
+      border:          `1px solid ${config.optionsBtnBorder}`,
       transform:       "translateY(-2px)",
-      boxShadow:       "0 4px 10px rgba(255, 198, 0, 0.3)",
+      boxShadow:       "0 4px 10px rgba(0, 0, 0, 0.12)",
     },
     // ==========================================================
 
@@ -188,7 +194,7 @@ export const buildStyles = (config, isMobile) => {
 
     // REPARACIÓN DEL BOTÓN DE ENVIAR
     sendButtonStyle: {
-      backgroundColor: BRAND.yellow,
+      backgroundColor: config.sendBtnBg,
       borderRadius: "50%",
       width: "38px",
       height: "38px",
@@ -200,7 +206,7 @@ export const buildStyles = (config, isMobile) => {
       flexShrink: 0,
     },
     sendIconStyle: {
-      fill: "#000000",
+      fill: config.headerTitleColor,
       width: "22px",
       height: "22px",
     },
@@ -222,7 +228,7 @@ export const buildStyles = (config, isMobile) => {
     },
 
     chatButtonStyle: {
-      background:  BRAND.yellow,
+      background:  config.launcherBg,
       zIndex:       MAX_Z_INDEX,
     },
 

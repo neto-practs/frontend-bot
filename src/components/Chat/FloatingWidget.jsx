@@ -26,7 +26,7 @@ const ES_PREMIUM = import.meta.env.VITE_MODO_BOT === "PREMIUM";
 // ==========================================
 // COMPONENTE: CABECERA CON SCALING ADAPTATIVO (cqw)
 // ==========================================
-const CustomHeader = ({ title, avatar }) => {
+const CustomHeader = ({ title, avatar, headerBg, headerTitleColor }) => {
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
@@ -57,9 +57,10 @@ const CustomHeader = ({ title, avatar }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Colores más oscuros solicitados
-  const colorOnline = "#15803d"; // Verde oscuro
-  const colorOffline = "#b91c1c"; // Rojo oscuro
+  // Colores del texto — se heredan del WP o caen al fallback
+  const textColor = headerTitleColor || "#000000";
+  const colorOnline = "#15803d";
+  const colorOffline = "#b91c1c";
 
   return (
     <div style={{ 
@@ -116,7 +117,7 @@ const CustomHeader = ({ title, avatar }) => {
         <span style={{ 
           fontSize: "clamp(16px, 1.2rem, 20px)", 
           fontWeight: "800", 
-          color: "#000000", 
+          color: textColor, 
           lineHeight: "1.2", 
           whiteSpace: "nowrap"
         }}>
@@ -127,7 +128,8 @@ const CustomHeader = ({ title, avatar }) => {
         <span style={{ 
           fontSize: "14px", 
           fontWeight: "400", 
-          color: "rgba(0, 0, 0, 0.8)", 
+          color: textColor, 
+          opacity: 0.8,
           marginTop: "1px",
           whiteSpace: "nowrap"
         }}>
@@ -290,7 +292,12 @@ const FloatingWidget = () => {
     baseSettings.header = {
       ...baseSettings.header,
       showAvatar: false,
-      title: <CustomHeader title={wp.headerTitleText} avatar={wp.headerAvatar || BOT_AVATAR_URL} />
+      title: <CustomHeader
+        title={wp.headerTitleText}
+        avatar={wp.headerAvatar || BOT_AVATAR_URL}
+        headerBg={wp.headerBg}
+        headerTitleColor={wp.headerTitleColor}
+      />
     };
 
     return baseSettings;
