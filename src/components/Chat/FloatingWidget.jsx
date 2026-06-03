@@ -14,6 +14,7 @@ import {
 import { useBotLogic } from "../../hooks/botLogic";
 import { useChatDOMInjector } from "../../hooks/useChatDOMInjector";
 import { useBotMemory } from "../../hooks/useBotMemory";
+import { useMobileKeyboardFix } from "../../hooks/useMobileKeyboardFix";
 import {
   gestionarSesionChat,
   sanitizeChatHistory,
@@ -165,6 +166,7 @@ const FloatingWidget = () => {
 
   const { handleBotMessage, getPiezas } = useBotLogic();
   useChatDOMInjector(mounted, getPiezas, wp);
+  useMobileKeyboardFix();
 
   const { lastSearchRef, isLockedRef, justUnlockedVerRef, setLock } = useBotMemory();
   const sugerenciasRef = useRef([]);
@@ -235,24 +237,55 @@ const FloatingWidget = () => {
         });
       });
 
-      // 2. ARREGLO BOTÓN ENVIAR (Click Manual)
+      // 2. ARREGLO TEXTAREA: enterKeyHint hace que el teclado móvil muestre "Enviar"
+      const chatWin = document.querySelector(".rcb-chat-window");
+      const chatInput = chatWin?.querySelector("textarea, input[type='text']");
+      if (chatInput && !chatInput.dataset.netoHint) {
+        chatInput.dataset.netoHint = "true";
+        chatInput.setAttribute("enterkeyhint", "send");
+      }
+
+      // 3. ARREGLO BOTÓN ENVIAR
       const sendBtn = document.querySelector(".rcb-send-button, button[aria-label='Send Message'], [class*='send-button']");
       if (sendBtn && !sendBtn.dataset.netoFixed) {
         sendBtn.dataset.netoFixed = "true";
-        sendBtn.addEventListener("click", (e) => {
-          const input = document.querySelector(".rcb-chat-input, textarea, input[type='text']");
-          if (input && input.value.trim() !== "") {
-            // Simulamos el evento Enter para que la librería procese el envío
-            const event = new KeyboardEvent("keydown", {
-              key: "Enter",
-              code: "Enter",
-              keyCode: 13,
-              which: 13,
-              bubbles: true,
-              cancelable: true
-            });
-            input.dispatchEvent(event);
-          }
+
+        // Busca el input dentro del chat-window para evitar coger el elemento equivocado
+        const findInput = () => {
+          const win = document.querySelector(".rcb-chat-window");
+          return win?.querySelector("textarea, input[type='text'], [class*='rcb-chat-input']")
+            || document.querySelector("textarea, input[type='text']");
+        };
+
+        let touchPending = false;
+
+        const doSend = () => {
+          const input = findInput();
+          if (!input || !input.value.trim()) return;
+          // Disparamos keydown + keypress por si la librería escucha alguno de los dos
+          const opts = { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true, cancelable: true, composed: true };
+          input.dispatchEvent(new KeyboardEvent("keydown", opts));
+          input.dispatchEvent(new KeyboardEvent("keypress", opts));
+        };
+
+        // Móvil: pointerdown + touchstart con preventDefault evitan que el input
+        // pierda el foco cuando el usuario toca el botón.
+        // touchend dispara el envío manualmente; el click sintético queda suprimido.
+        sendBtn.addEventListener("pointerdown", (e) => {
+          if (e.pointerType === "touch") e.preventDefault();
+        }, { passive: false });
+        sendBtn.addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          touchPending = true;
+        }, { passive: false });
+        sendBtn.addEventListener("touchend", (e) => {
+          e.preventDefault();
+          if (touchPending) { touchPending = false; doSend(); }
+        }, { passive: false });
+
+        // Escritorio: click normal (no hay touchstart, así que touchPending=false)
+        sendBtn.addEventListener("click", () => {
+          if (!touchPending) doSend();
         });
       }
     };

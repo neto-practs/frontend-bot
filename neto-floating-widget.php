@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Floating Widget
  * Description: Agente de búsqueda conversacional clics + whatshApp
- * Version: 4.3
+ * Version: 4.4
  * Author: Saul
  */
 
@@ -59,6 +59,7 @@ function nfw_settings_init() {
         add_settings_section('nfw_section_input', '5. Controles Inferiores (Caja de Texto y Enviar)', null, 'nfw-config');
         add_settings_section('nfw_section_cards', '6. Tarjetas de Productos', null, 'nfw-config');
         add_settings_section('nfw_section_api', '7. Conexión al Servidor Inteligente', null, 'nfw-config');
+        add_settings_section('nfw_section_newconv', '8. Botón Nueva Conversación', null, 'nfw-config');
 
         nfw_add_field('headerBg', 'Color de la Cabecera (Franja superior del chat)', 'color', 'nfw_section_header', '#99c355');
         nfw_add_field('headerTitleColor', 'Color del título en la cabecera', 'color', 'nfw_section_header', '#ffffff');
@@ -111,6 +112,17 @@ function nfw_settings_init() {
 
         nfw_add_field('backendUrl', 'URL del Backend', 'text', 'nfw_section_api', 'https://api.midominio.com/api/chat');
         nfw_add_field('backendApiKey', 'Tu Clave de Acceso (API Key)', 'text', 'nfw_section_api', '');
+
+        // Sección 8: Botón Nueva Conversación
+        nfw_add_field('newConvEnabled', 'Mostrar botón "Nueva Conversación"', 'select', 'nfw_section_newconv', 'true', array(
+            'true' => 'Sí (Visible)',
+            'false' => 'No (Oculto)'
+        ));
+        nfw_add_field('newConvText', 'Texto del botón', 'text', 'nfw_section_newconv', 'Nueva conversación');
+        nfw_add_field('newConvBg', 'Color de fondo del botón', 'color', 'nfw_section_newconv', '#ffffff');
+        nfw_add_field('newConvColor', 'Color del texto e icono', 'color', 'nfw_section_newconv', '#555555');
+        nfw_add_field('newConvHoverBg', 'Color de fondo al pasar el ratón', 'color', 'nfw_section_newconv', '#f0f0f0');
+        nfw_add_field('newConvTooltip', 'Texto del tooltip (al pasar el ratón)', 'text', 'nfw_section_newconv', 'Borrar conversación y empezar de nuevo');
         nfw_add_field('whatsappNumber', 'Número de WhatsApp (con prefijo, ej: 34600111222)', 'text', 'nfw_section_api', '');
 
     } catch (\Throwable $e) {
@@ -298,6 +310,12 @@ function nfw_load_files() {
                 'backendUrl'       => nfw_get_val($options, 'backendUrl', 'http://localhost:4000/api/chat'),
                 'backendApiKey'    => nfw_get_val($options, 'backendApiKey', ''),
                 'whatsappNumber'   => nfw_get_val($options, 'whatsappNumber', ''),
+                'newConvEnabled'   => nfw_get_val($options, 'newConvEnabled', 'true'),
+                'newConvText'      => nfw_get_val($options, 'newConvText', 'Nueva conversación'),
+                'newConvBg'        => nfw_get_val($options, 'newConvBg', '#ffffff'),
+                'newConvColor'     => nfw_get_val($options, 'newConvColor', '#555555'),
+                'newConvHoverBg'   => nfw_get_val($options, 'newConvHoverBg', '#f0f0f0'),
+                'newConvTooltip'   => nfw_get_val($options, 'newConvTooltip', 'Borrar conversación y empezar de nuevo'),
                 'restUrl'          => rest_url('neto-bot/v1/track-click'),
                 'restNonce'        => wp_create_nonce('wp_rest')
             );

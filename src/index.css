@@ -99,6 +99,7 @@
 
 /* ---------------------------------------------------
    AJUSTE DE LA VENTANA (FULLSCREEN SOLO EN MÓVIL)
+   + FIX PARA TECLADO VIRTUAL
 --------------------------------------------------- */
 @media (max-width: 767px) {
   .rcb-chat-window {
@@ -108,12 +109,80 @@
     right: 0 !important;
     bottom: 0 !important;
     width: 100vw !important;
-    height: 100dvh !important;
     max-width: 100vw !important;
-    max-height: 100dvh !important;
+    /* ── Cadena de fallbacks progresiva ──
+       1. 100vh        → funciona en TODO (Android 5+, iOS 9+, Samsung Internet…)
+       2. 100dvh       → navegadores modernos (Chrome 108+, iOS 15.4+)
+       3. var(--vh-real)→ JS activo: altura EXACTA del viewport visible (sin teclado)
+       La cascada CSS hace que el navegador use la última declaración válida. */
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+  /* Cuando JS ha seteado --vh-real, esta regla (más específica) gana */
+  :root:has([style*="--vh-real"]) .rcb-chat-window {
+    height: calc(var(--vh-real) * 100) !important;
+    max-height: calc(var(--vh-real) * 100) !important;
+  }
+  /* Navegadores modernos que soporten dvh pero sin JS todavía */
+  @supports (height: 1dvh) {
+    .rcb-chat-window {
+      height: 100dvh !important;
+      max-height: 100dvh !important;
+    }
+  }
+  .rcb-chat-window {
     border-radius: 0 !important;
     box-shadow: none !important;
     margin: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* El body del chat (zona de mensajes) debe ser flexible y scrollable */
+  .rcb-chat-window .rcb-chat-body-container {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* El contenedor del input debe quedarse fijo abajo sin ser empujado */
+  .rcb-chat-window .rcb-chat-input-container {
+    flex-shrink: 0 !important;
+    position: relative !important;
+  }
+
+  /* Prevenir que el body se desplace cuando el teclado está abierto.
+     NO usar position:fixed aquí — provoca que el chat "salte" y se pierda
+     la posición de scroll, resultando en una pantalla blanca.
+     El hook useMobileKeyboardFix.js ajusta la altura del chat-window
+     directamente vía JS usando visualViewport. */
+  body.neto-keyboard-open {
+    overflow: hidden !important;
+    touch-action: none !important;
+  }
+
+  /* Cuando el teclado está abierto, asegurar que el chat-window
+     sea un flex-column correcto para que el input quede visible */
+  body.neto-keyboard-open .rcb-chat-window {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  /* El body del chat se contrae para dejar espacio al input */
+  body.neto-keyboard-open .rcb-chat-body-container {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* El input-container se queda fijo abajo dentro del flex */
+  body.neto-keyboard-open .rcb-chat-input-container {
+    flex-shrink: 0 !important;
+    position: relative !important;
   }
 }
 

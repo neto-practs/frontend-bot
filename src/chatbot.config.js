@@ -240,10 +240,11 @@ export const buildStyles = (config, isMobile) => {
         ? {
             inset:        0,
             width:        "100vw",
-            height:       "100dvh",
+            height:       "100vh",
             maxWidth:     "100vw",
-            maxHeight:    "100dvh",
+            maxHeight:    "100vh",
             borderRadius: 0,
+            overflow:     "hidden",
           }
         : {
             bottom:       "24px",
