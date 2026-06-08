@@ -1,217 +1,104 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect } from "react";
 
 const MOBILE_BP = 768;
+const WIN_SEL = ".rcb-chat-window";
+const BODY_SEL = ".rcb-chat-body-container, .rcb-chat-body";
 
 /**
  * useMobileKeyboardFix
  *
- * Soluciona los problemas de teclado virtual en móvil:
- * 1. El botón de enviar no responde mientras el input está enfocado.
- * 2. La conversación se desplaza fuera de vista al abrir el teclado.
+ * Dos problemas que resuelve:
  *
- * Estrategia:
- * - Usamos visualViewport.height Y visualViewport.offsetTop para repositionar
- *   el chat-window dentro del área visible cuando el teclado está abierto.
- *   En iOS, offsetTop > 0 cuando el teclado empuja el viewport hacia arriba;
- *   sin ajustar `top`, el chat-window queda parcialmente bajo el teclado.
- * - Double-RAF en scrollToBottom garantiza que el layout haya terminado antes
- *   de actualizar scrollTop.
- * - El fix del botón enviar vive en FloatingWidget (touchstart preventDefault).
+ * 1. En Android (Chrome), el teclado por defecto usa interactive-widget=resizes-visual:
+ *    no encoge el layout viewport, sino que "panea" el viewport visual. Los elementos
+ *    position:fixed con inset:0/100dvh mantienen su tamaño y el browser los desplaza,
+ *    con lo que la cabecera y mensajes se van por arriba y el input queda flotando.
+ *    Forzar resizes-content hace que el teclado encoja el layout viewport, y CSS solo
+ *    (inset:0 + 100dvh) ya encaja el chat sobre el teclado sin intervención JS.
+ *
+ * 2. En iOS Safari, resizes-content se ignora. Safari panea la página y puede que
+ *    el chat quede parcialmente tapado por el teclado. Se usa visualViewport para
+ *    fijar la altura y el desplazamiento exactos.
+ *
+ * Importante: se añade `transition:none` al chat-window para que los cambios de
+ * height/top sean inmediatos. Sin esto, el CSS `transition: all .3s ease` de
+ * react-chatbotify anima el resize y produce el efecto de "se sube y se recoloca".
  */
-export function useMobileKeyboardFix() {
-  const isKeyboardOpenRef = useRef(false);
-  const scrollBodyRef = useRef(null);
-  const chatWindowRef = useRef(null);
-  const rafRef = useRef(null);
-  const initialHeightRef = useRef(
-    window.visualViewport?.height || window.innerHeight
-  );
+export function useMobileKeyboardFix(isChatOpen) {
+  useEffect(() => {
+    if (window.innerWidth >= MOBILE_BP || !isChatOpen) return;
 
-  const getChatBody = useCallback(() => {
-    if (scrollBodyRef.current && scrollBodyRef.current.isConnected) {
-      return scrollBodyRef.current;
+    // ── Capa 1: Android Chrome ────────────────────────────────────────────────
+    const meta = document.querySelector('meta[name="viewport"]');
+    let restoreMeta = null;
+    if (meta && !/interactive-widget/.test(meta.getAttribute("content") || "")) {
+      const orig = meta.getAttribute("content") || "";
+      meta.setAttribute("content", `${orig}, interactive-widget=resizes-content`);
+      restoreMeta = () => meta.setAttribute("content", orig);
     }
-    const body = document.querySelector(
-      ".rcb-chat-body-container, .rcb-chat-body"
-    );
-    if (body) scrollBodyRef.current = body;
-    return body;
-  }, []);
 
-  const getChatWindow = useCallback(() => {
-    if (chatWindowRef.current && chatWindowRef.current.isConnected) {
-      return chatWindowRef.current;
-    }
-    const win = document.querySelector(".rcb-chat-window");
-    if (win) chatWindowRef.current = win;
-    return win;
-  }, []);
+    // ── Capa 2: iOS + red de seguridad (visualViewport) ──────────────────────
+    const vv = window.visualViewport;
+    if (!vv) return () => { restoreMeta?.(); };
 
-  // Double RAF: espera dos frames para que el layout refleje la nueva altura
-  const scrollToBottom = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const body = getChatBody();
+    let raf = 0;
+    let cachedWin = null;
+
+    const getWin = () => {
+      if (cachedWin?.isConnected) return cachedWin;
+      return (cachedWin = document.querySelector(WIN_SEL));
+    };
+
+    const update = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const el = getWin();
+        if (!el) return;
+
+        const h = Math.round(vv.height);
+        const offsetTop = Math.round(vv.offsetTop);
+
+        // Desactivar transition para que el resize sea instantáneo (sin animación
+        // del CSS `transition: all .3s ease` de react-chatbotify que causa el glitch)
+        el.style.setProperty("transition", "none", "important");
+        // Altura exacta del viewport visible (sin el teclado)
+        el.style.setProperty("height", `${h}px`, "important");
+        el.style.setProperty("max-height", `${h}px`, "important");
+        // En iOS, offsetTop > 0 cuando Safari desplaza la página; lo compensamos
+        el.style.setProperty("top", `${offsetTop}px`, "important");
+
+        // Scroll al último mensaje
+        const body = document.querySelector(BODY_SEL);
         if (body) body.scrollTop = body.scrollHeight;
       });
-    });
-  }, [getChatBody]);
-
-  // Repositiona el chat-window dentro del área visible del visualViewport.
-  // offsetTop > 0 en iOS cuando el teclado está abierto y ha desplazado el viewport.
-  const applyViewportHeight = useCallback((height, offsetTop = 0) => {
-    const chatWindow = getChatWindow();
-    if (!chatWindow) return;
-
-    chatWindow.style.setProperty("height", `${height}px`, "important");
-    chatWindow.style.setProperty("max-height", `${height}px`, "important");
-    chatWindow.style.setProperty("top", `${offsetTop}px`, "important");
-    chatWindow.style.setProperty("bottom", "auto", "important");
-  }, [getChatWindow]);
-
-  const updateViewportHeight = useCallback(() => {
-    const vv = window.visualViewport;
-    const currentHeight = vv ? vv.height : window.innerHeight;
-    const offsetTop = vv ? Math.round(vv.offsetTop) : 0;
-
-    const vhReal = currentHeight * 0.01;
-    document.documentElement.style.setProperty("--vh-real", `${vhReal}px`);
-
-    const refHeight = initialHeightRef.current;
-    const keyboardOpen = (refHeight - currentHeight) > refHeight * 0.25;
-
-    if (keyboardOpen && !isKeyboardOpenRef.current) {
-      // ── Teclado ABIERTO ──
-      isKeyboardOpenRef.current = true;
-      document.body.classList.add("neto-keyboard-open");
-
-      window.scrollTo(0, 0);
-      applyViewportHeight(currentHeight, offsetTop);
-
-      scrollToBottom();
-      setTimeout(scrollToBottom, 150);
-      setTimeout(scrollToBottom, 400);
-
-    } else if (!keyboardOpen && isKeyboardOpenRef.current) {
-      // ── Teclado CERRADO ──
-      isKeyboardOpenRef.current = false;
-      document.body.classList.remove("neto-keyboard-open");
-
-      const chatWindow = getChatWindow();
-      if (chatWindow) {
-        chatWindow.style.removeProperty("height");
-        chatWindow.style.removeProperty("max-height");
-        chatWindow.style.removeProperty("top");
-        chatWindow.style.removeProperty("bottom");
-      }
-
-      window.scrollTo(0, 0);
-      scrollToBottom();
-      setTimeout(scrollToBottom, 100);
-
-    } else if (keyboardOpen) {
-      // ── Teclado sigue abierto (rotación u otro cambio de viewport) ──
-      window.scrollTo(0, 0);
-      applyViewportHeight(currentHeight, offsetTop);
-      scrollToBottom();
-    }
-  }, [scrollToBottom, applyViewportHeight, getChatWindow]);
-
-  useEffect(() => {
-    if (window.innerWidth >= MOBILE_BP) return;
-
-    const vv = window.visualViewport;
-
-    const initH = (vv ? vv.height : window.innerHeight) * 0.01;
-    document.documentElement.style.setProperty("--vh-real", `${initH}px`);
-
-    if (vv) {
-      vv.addEventListener("resize", updateViewportHeight);
-      vv.addEventListener("scroll", updateViewportHeight);
-    }
-
-    // Fallback para navegadores sin visualViewport
-    const handleWindowResize = () => {
-      if (vv) return;
-      document.documentElement.style.setProperty(
-        "--vh-real",
-        `${window.innerHeight * 0.01}px`
-      );
-      const refHeight = initialHeightRef.current;
-      const keyboardOpen = (refHeight - window.innerHeight) > refHeight * 0.25;
-      if (keyboardOpen) {
-        document.body.classList.add("neto-keyboard-open");
-        scrollToBottom();
-        setTimeout(scrollToBottom, 200);
-      } else {
-        document.body.classList.remove("neto-keyboard-open");
-      }
     };
-    window.addEventListener("resize", handleWindowResize);
 
-    // Focus: scroll cuando el usuario toca un input/textarea
-    const handleFocusIn = (e) => {
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+
+    const onFocusIn = (e) => {
       const tag = e.target?.tagName?.toLowerCase();
-      if (tag === "input" || tag === "textarea") {
-        setTimeout(() => {
-          updateViewportHeight();
-          scrollToBottom();
-        }, 200);
-        setTimeout(scrollToBottom, 500);
-        setTimeout(scrollToBottom, 800);
-      }
+      if (tag !== "input" && tag !== "textarea") return;
+      update();
+      setTimeout(update, 150);
+      setTimeout(update, 400);
     };
-
-    // Bloquear scroll del BODY fuera del chat-window
-    const handleTouchMove = (e) => {
-      if (!isKeyboardOpenRef.current) return;
-      const chatWindow = getChatWindow();
-      if (chatWindow && chatWindow.contains(e.target)) return;
-      e.preventDefault();
-    };
-
-    const handleTouchStart = (e) => {
-      if (!isKeyboardOpenRef.current) return;
-      const chatWindow = getChatWindow();
-      if (chatWindow && chatWindow.contains(e.target)) return;
-      if (e.touches.length === 1) e.preventDefault();
-    };
-
-    document.addEventListener("focusin", handleFocusIn);
-    document.addEventListener("touchmove", handleTouchMove, { passive: false });
-    document.addEventListener("touchstart", handleTouchStart, { passive: false });
-
-    const handleOrientation = () => {
-      setTimeout(() => {
-        initialHeightRef.current = vv ? vv.height : window.innerHeight;
-        updateViewportHeight();
-      }, 300);
-    };
-    window.addEventListener("orientationchange", handleOrientation);
+    document.addEventListener("focusin", onFocusIn);
 
     return () => {
-      if (vv) {
-        vv.removeEventListener("resize", updateViewportHeight);
-        vv.removeEventListener("scroll", updateViewportHeight);
-      }
-      window.removeEventListener("resize", handleWindowResize);
-      document.removeEventListener("focusin", handleFocusIn);
-      document.removeEventListener("touchmove", handleTouchMove);
-      document.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("orientationchange", handleOrientation);
-      document.documentElement.style.removeProperty("--vh-real");
-      document.body.classList.remove("neto-keyboard-open");
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      document.removeEventListener("focusin", onFocusIn);
+      cancelAnimationFrame(raf);
+      restoreMeta?.();
 
-      const chatWindow = getChatWindow();
-      if (chatWindow) {
-        chatWindow.style.removeProperty("height");
-        chatWindow.style.removeProperty("max-height");
-        chatWindow.style.removeProperty("top");
-        chatWindow.style.removeProperty("bottom");
+      const el = getWin();
+      if (el) {
+        ["transition", "height", "max-height", "top"].forEach((p) =>
+          el.style.removeProperty(p)
+        );
       }
-
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [updateViewportHeight, scrollToBottom, getChatBody, getChatWindow]);
+  }, [isChatOpen]);
 }

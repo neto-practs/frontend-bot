@@ -5,7 +5,9 @@ import {
   MOBILE_BP,
   MAX_Z_INDEX,
   STORAGE_KEY,
+  SESSION_KEY,
   PIEZAS_KEY,
+  CONTEXT_KEY,
   buildConfig,
   buildStyles,
   buildSettings,
@@ -27,8 +29,20 @@ const ES_PREMIUM = import.meta.env.VITE_MODO_BOT === "PREMIUM";
 // ==========================================
 // COMPONENTE: CABECERA CON SCALING ADAPTATIVO (cqw)
 // ==========================================
-const CustomHeader = ({ title, avatar, headerBg, headerTitleColor }) => {
+// Tamaño de botones según chatSize de WordPress
+const HEADER_BTN_SIZE  = { small: 36, medium: 42, large: 50 };
+const HEADER_ICON_SIZE = { small: 20, medium: 24, large: 29 };
+
+const CustomHeader = ({
+  title, avatar, headerTitleColor,
+  onReset, onClose,
+  newConvBg, newConvColor, newConvHoverBg, newConvEnabled, newConvTooltip,
+  chatSize,
+}) => {
   const [isOnline, setIsOnline] = useState(true);
+  const [resetHovered, setResetHovered] = useState(false);
+  const [closeHovered, setCloseHovered] = useState(false);
+  const [showResetTip, setShowResetTip] = useState(false);
 
   useEffect(() => {
     const checkBackend = async () => {
@@ -36,15 +50,12 @@ const CustomHeader = ({ title, avatar, headerBg, headerTitleColor }) => {
         const chatUrl = window.ChatBotConfig?.backendUrl || import.meta.env.VITE_API_URL || "http://localhost:4000/api/chat";
         const healthUrl = chatUrl.replace("/chat", "/health");
         const res = await fetch(healthUrl, { method: "GET" });
-        // El servidor está activo si responde (200 OK ó 503 DEGRADADO).
-        // Sólo marcamos offline si no hay respuesta en absoluto.
         if (res.ok) {
           setIsOnline(true);
         } else {
-          // 503 con body JSON → el servidor Node funciona pero la API externa falló
           try {
             const data = await res.json();
-            setIsOnline(typeof data?.estado === "string"); // tiene campo 'estado' → servidor activo
+            setIsOnline(typeof data?.estado === "string");
           } catch {
             setIsOnline(false);
           }
@@ -58,95 +69,162 @@ const CustomHeader = ({ title, avatar, headerBg, headerTitleColor }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Colores del texto — se heredan del WP o caen al fallback
-  const textColor = headerTitleColor || "#000000";
-  const colorOnline = "#15803d";
+  const [viewportW, setViewportW] = useState(window.innerWidth);
+  useEffect(() => {
+    const onResize = () => setViewportW(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const textColor    = headerTitleColor || "#000000";
+  const colorOnline  = "#15803d";
   const colorOffline = "#b91c1c";
 
+  const showResetBtn = newConvEnabled !== "false";
+  const btnColor     = newConvColor   || "#ffffff";
+  const btnHoverBg   = newConvHoverBg || "rgba(0,0,0,0.18)";
+  const tipText      = newConvTooltip || "Nueva búsqueda";
+
+  // En móvil los botones son más pequeños independientemente del chatSize de WP
+  const isMobileView = viewportW < MOBILE_BP;
+  const size     = isMobileView ? 36 : (HEADER_BTN_SIZE[chatSize]  || HEADER_BTN_SIZE.medium);
+  const iconSize = isMobileView ? 17 : (HEADER_ICON_SIZE[chatSize] || HEADER_ICON_SIZE.medium);
+  // Ancho total que ocupan los botones + hueco entre ellos
+  const btnAreaW = showResetBtn ? size * 2 + 4 : size;
+
+  const btnBase = {
+    background: "transparent",
+    border: "none", cursor: "pointer",
+    width: `${size}px`, height: `${size}px`, borderRadius: "50%",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    padding: 0, margin: 0, flexShrink: 0,
+    color: btnColor,
+    transition: "background 0.18s ease",
+  };
+
   return (
-    <div style={{ 
-      display: "flex", 
-      alignItems: "center", 
-      gap: "12px", // Aumentado ligeramente para mejor separación
-      width: "100%", 
-      boxSizing: "border-box",
-      // REQUISITO: padding-right de 40px para la X, y un poco de padding left
-      padding: "5px 40px 5px 5px", 
+    // Sin position:relative → los botones con position:absolute se anclan
+    // al .rcb-chat-header (que sí tiene position:relative), garantizando
+    // que queden en la esquina derecha real del header, no del título.
+    <div style={{
+      display: "flex", alignItems: "center",
+      width: "100%", boxSizing: "border-box", padding: "5px 0",
     }}>
-      {/* 1. AVATAR CON INDICADOR */}
-      <div style={{ position: "relative", flexShrink: 0 }}>
-        <div style={{
-          width: "50px", 
-          height: "50px",
-          borderRadius: "50%", 
-          backgroundColor: "#ffffff", 
-          border: "2px solid rgba(255,255,255,0.2)",
-          overflow: "hidden", 
-          display: "flex", 
-          alignItems: "center", 
-          justifyContent: "center",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.1)"
-        }}>
-          {avatar ? (
-            <img src={avatar} alt="Bot" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <svg viewBox="0 0 24 24" fill="#333" width="60%" height="60%"><path d="M21 11.5v-1a1.5 1.5 0 0 0-1.5-1.5H18V7a3 3 0 0 0-3-3h-6a3 3 0 0 0-3 3v2H4.5A1.5 1.5 0 0 0 3 10.5v1A1.5 1.5 0 0 0 4.5 13H6v2a3 3 0 0 0 3 3h1v2H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-2v-2h1a3 3 0 0 0 3-3v-2h1.5A1.5 1.5 0 0 0 21 11.5zm-11-2.5a1 1 0 1 1-1-1 1 1 0 0 1 1 1zm5 0a1 1 0 1 1-1-1 1 1 0 0 1 1 1zm-4 5h2a1 1 0 0 1 0 2h-2a1 1 0 0 1 0-2z" /></svg>
-          )}
+      {/* AVATAR + BLOQUE DE TEXTO — paddingRight reserva espacio para los botones */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: "8px",
+        minWidth: 0, flex: 1,
+        paddingRight: `${btnAreaW + 14}px`,
+      }}>
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <div style={{
+            width: "50px", height: "50px", borderRadius: "50%",
+            backgroundColor: "#ffffff", border: "2px solid rgba(255,255,255,0.2)",
+            overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+          }}>
+            {avatar
+              ? <img src={avatar} alt="Bot" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <svg viewBox="0 0 24 24" fill="#333" width="60%" height="60%"><path d="M21 11.5v-1a1.5 1.5 0 0 0-1.5-1.5H18V7a3 3 0 0 0-3-3h-6a3 3 0 0 0-3 3v2H4.5A1.5 1.5 0 0 0 3 10.5v1A1.5 1.5 0 0 0 4.5 13H6v2a3 3 0 0 0 3 3h1v2H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-2v-2h1a3 3 0 0 0 3-3v-2h1.5A1.5 1.5 0 0 0 21 11.5zm-11-2.5a1 1 0 1 1-1-1 1 1 0 0 1 1 1zm5 0a1 1 0 1 1-1-1 1 1 0 0 1 1 1zm-4 5h2a1 1 0 0 1 0 2h-2a1 1 0 0 1 0-2z" /></svg>
+            }
+          </div>
+          <div style={{
+            position: "absolute", bottom: "2px", right: "2px",
+            width: "12px", height: "12px", borderRadius: "50%",
+            backgroundColor: isOnline ? colorOnline : colorOffline,
+            border: "2px solid #ffffff", boxShadow: "0 0 5px rgba(0,0,0,0.2)",
+          }} />
         </div>
+
         <div style={{
-          position: "absolute", 
-          bottom: "2px", 
-          right: "2px",
-          width: "12px", 
-          height: "12px",
-          borderRadius: "50%", 
-          backgroundColor: isOnline ? colorOnline : colorOffline, 
-          border: "2px solid #ffffff",
-          boxShadow: "0 0 5px rgba(0,0,0,0.2)"
-        }} />
+          display: "flex", flexDirection: "column", justifyContent: "center",
+          flex: 1, minWidth: 0, overflow: "hidden",
+        }}>
+          <span style={{
+            fontSize: "clamp(14px, 1.1rem, 18px)", fontWeight: "800", color: textColor,
+            lineHeight: "1.2", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}>
+            {title || "Asistente IA"}
+          </span>
+          <span style={{
+            fontSize: "13px", fontWeight: "400", color: textColor, opacity: 0.8,
+            marginTop: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}>
+            Especialista en Recambios
+          </span>
+          <span style={{
+            fontSize: "11px", fontWeight: "700",
+            color: isOnline ? colorOnline : colorOffline,
+            marginTop: "3px", letterSpacing: "0.05em",
+          }}>
+            {isOnline ? "• En línea" : "• Fuera de servicio"}
+          </span>
+        </div>
       </div>
 
-      {/* 2. BLOQUE DE TEXTO (3 PISOS) */}
-      <div style={{ 
-        display: "flex", 
-        flexDirection: "column", 
-        justifyContent: "center",
-        flex: 1, 
-        minWidth: 0
+      {/* BOTONES — absolutamente pegados al borde derecho del título */}
+      <div style={{
+        position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)",
+        display: "flex", alignItems: "center", gap: "2px",
       }}>
-        {/* Línea 1: Título */}
-        <span style={{ 
-          fontSize: "clamp(16px, 1.2rem, 20px)", 
-          fontWeight: "800", 
-          color: textColor, 
-          lineHeight: "1.2", 
-          whiteSpace: "nowrap"
-        }}>
-          {title || "Asistente IA"}
-        </span>
 
-        {/* Línea 2: Subtítulo */}
-        <span style={{ 
-          fontSize: "14px", 
-          fontWeight: "400", 
-          color: textColor, 
-          opacity: 0.8,
-          marginTop: "1px",
-          whiteSpace: "nowrap"
-        }}>
-          Especialista en Recambios
-        </span>
+        {/* Botón ↺ Nueva búsqueda */}
+        {showResetBtn && (
+          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+            <button
+              onClick={onReset}
+              aria-label={tipText}
+              style={{
+                ...btnBase,
+                background: resetHovered ? btnHoverBg : "transparent",
+                transform: resetHovered ? "rotate(22deg)" : "rotate(0deg)",
+                transition: "background 0.18s ease, transform 0.2s ease",
+              }}
+              onMouseEnter={() => { setResetHovered(true); setShowResetTip(true); }}
+              onMouseLeave={() => { setResetHovered(false); setShowResetTip(false); }}
+            >
+              <svg viewBox="0 0 24 24" width={iconSize} height={iconSize} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+              </svg>
+            </button>
+            {showResetTip && (
+              <div style={{
+                position: "absolute", right: "calc(100% + 6px)", top: "50%", transform: "translateY(-50%)",
+                background: "rgba(0,0,0,0.78)", color: "#fff", fontSize: "11px", fontWeight: 500,
+                padding: "4px 9px", borderRadius: "5px", whiteSpace: "nowrap", pointerEvents: "none", zIndex: 9999,
+              }}>
+                {tipText}
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* Línea 3: Estado Dinámico */}
-        <span style={{ 
-          fontSize: "11px", 
-          fontWeight: "700", 
-          color: isOnline ? colorOnline : colorOffline, 
-          marginTop: "3px", 
-          letterSpacing: "0.05em"
-        }}>
-          {isOnline ? "• En línea" : "• Fuera de servicio"}
-        </span>
+        {/* Botón ✕ Cerrar */}
+        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+          <button
+            onClick={onClose}
+            aria-label="Cerrar chat"
+            style={{ ...btnBase, background: closeHovered ? btnHoverBg : "transparent" }}
+            onMouseEnter={() => setCloseHovered(true)}
+            onMouseLeave={() => setCloseHovered(false)}
+          >
+            <svg viewBox="0 0 24 24" width={iconSize + 6} height={iconSize + 6} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+          {closeHovered && (
+            <div style={{
+              position: "absolute", right: "calc(100% + 6px)", top: "50%", transform: "translateY(-50%)",
+              background: "rgba(0,0,0,0.78)", color: "#fff", fontSize: "11px", fontWeight: 500,
+              padding: "4px 9px", borderRadius: "5px", whiteSpace: "nowrap", pointerEvents: "none", zIndex: 9999,
+            }}>
+              Cerrar chat
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
@@ -158,6 +236,8 @@ const CustomHeader = ({ title, avatar, headerBg, headerTitleColor }) => {
 const FloatingWidget = () => {
   const [mounted, setMounted] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [forceClose, setForceClose] = useState(false);
+  const [chatbotKey, setChatbotKey] = useState(0);
   const isReplayingRef = useRef(true);
   
   const wp = useMemo(() => window.ChatBotConfig || {}, []);
@@ -166,10 +246,28 @@ const FloatingWidget = () => {
 
   const { handleBotMessage, getPiezas } = useBotLogic();
   useChatDOMInjector(mounted, getPiezas, wp);
-  useMobileKeyboardFix();
+  useMobileKeyboardFix(isChatOpen);
 
   const { lastSearchRef, isLockedRef, justUnlockedVerRef, setLock } = useBotMemory();
   const sugerenciasRef = useRef([]);
+
+  const resetConversation = useCallback(() => {
+    // Limpia todo el estado persistido
+    try {
+      [STORAGE_KEY, SESSION_KEY, PIEZAS_KEY, CONTEXT_KEY, "NFW_LAST_SEARCH", "NFW_IS_LOCKED"]
+        .forEach((k) => localStorage.removeItem(k));
+    } catch (_) {}
+
+    // Resetea los refs en memoria (el backend es stateless, contexto vacío = búsqueda nueva)
+    lastSearchRef.current = "";
+    isLockedRef.current = false;
+    justUnlockedVerRef.current = false;
+    sugerenciasRef.current = [];
+    isReplayingRef.current = false;
+
+    // Fuerza el desmontaje y remontaje de ChatBot (limpia su estado interno)
+    setChatbotKey((k) => k + 1);
+  }, [lastSearchRef, isLockedRef, justUnlockedVerRef, sugerenciasRef]);
 
   // --- EFECTOS DE MONTAJE Y DOM ---
   useEffect(() => {
@@ -186,7 +284,12 @@ const FloatingWidget = () => {
   useEffect(() => {
     const style = document.createElement("style");
     style.id = "neto-hide-rcb-btn";
-    style.textContent = `.rcb-toggle-button { visibility: hidden !important; pointer-events: none !important; }`;
+    // Oculta el toggle flotante nativo Y el botón X nativo del header
+    // (ambos los reemplazamos con nuestros propios controles React).
+    style.textContent = `
+      .rcb-toggle-button { visibility: hidden !important; pointer-events: none !important; }
+      [class*="rcb"][class*="close"], .rcb-close-button { display: none !important; }
+    `;
     document.head.appendChild(style);
     return () => style.remove();
   }, []);
@@ -202,41 +305,93 @@ const FloatingWidget = () => {
     return () => observer.disconnect();
   }, []);
 
+  // Agrupa los .rcb-options consecutivos (uno por opción en el DOM de react-chatbotify)
+  // en un .neto-options-wrapper horizontal scrollable, y añade el hint debajo.
+  useEffect(() => {
+    const WRAPPER = "neto-options-wrapper";
+    const HINT    = "neto-scroll-hint";
+    const HINT_TXT = "← Desliza horizontalmente para ver todas las opciones →";
+
+    const group = () => {
+      // Solo .rcb-options que NO estén ya dentro de nuestro wrapper
+      const loose = [...document.querySelectorAll(
+        `.rcb-options:not(.${WRAPPER} > .rcb-options)`
+      )];
+      if (!loose.length) return;
+
+      // Agrupar los que son hermanos consecutivos
+      const groups = [];
+      let current = [loose[0]];
+      for (let i = 1; i < loose.length; i++) {
+        // Avanza desde el final del grupo saltando nodos de texto vacíos
+        let cursor = current[current.length - 1].nextSibling;
+        while (cursor && cursor.nodeType === Node.TEXT_NODE && !cursor.textContent.trim()) {
+          cursor = cursor.nextSibling;
+        }
+        if (cursor === loose[i]) {
+          current.push(loose[i]);
+        } else {
+          groups.push(current);
+          current = [loose[i]];
+        }
+      }
+      groups.push(current);
+
+      groups.forEach(els => {
+        const wrapper = document.createElement("div");
+        wrapper.className = WRAPPER;
+        els[0].parentNode.insertBefore(wrapper, els[0]);
+        els.forEach(el => wrapper.appendChild(el));
+
+        // Hint debajo del wrapper
+        if (!wrapper.nextElementSibling?.classList.contains(HINT)) {
+          const hint = document.createElement("div");
+          hint.className = HINT;
+          hint.textContent = HINT_TXT;
+          wrapper.insertAdjacentElement("afterend", hint);
+        }
+      });
+
+      // Limpiar hints huérfanos
+      document.querySelectorAll(`.${HINT}`).forEach(h => {
+        if (!h.previousElementSibling?.classList.contains(WRAPPER)) h.remove();
+      });
+    };
+
+    const observer = new MutationObserver(group);
+    observer.observe(document.body, { childList: true, subtree: true });
+    group();
+    return () => {
+      observer.disconnect();
+      document.querySelectorAll(`.${HINT}, .${WRAPPER}`).forEach(el => {
+        if (el.classList.contains(WRAPPER)) {
+          // Saca las opciones del wrapper antes de eliminarlo
+          [...el.children].forEach(c => el.parentNode.insertBefore(c, el));
+        }
+        el.remove();
+      });
+    };
+  }, []);
+
+  // Body Scroll Lock en móvil: cuando el chat está abierto, evitamos el scroll.
+  // Usar solo overflow: hidden y depender del touchmove preventDefault en useMobileKeyboardFix
+  // evita que Safari rompa los elementos con position: fixed (como la ventana del chat).
+  useEffect(() => {
+    if (window.innerWidth >= MOBILE_BP) return;
+    if (!isChatOpen) return;
+
+    document.documentElement.style.setProperty("overflow", "hidden", "important");
+    document.body.style.setProperty("overflow", "hidden", "important");
+
+    return () => {
+      document.body.style.removeProperty("overflow");
+      document.documentElement.style.removeProperty("overflow");
+    };
+  }, [isChatOpen]);
+
   // FIX: Forzamos el botón de cierre a ser grande y centrado dinámicamente
   useEffect(() => {
     const applyFix = () => {
-      // 1. ARREGLO BOTÓN CIERRE (X)
-      const selectors = [
-        ".rcb-close-button", 
-        "button[aria-label='Close Chat']", 
-        "[class*='close-button']"
-      ];
-      selectors.forEach(sel => {
-        document.querySelectorAll(sel).forEach(btn => {
-          btn.style.setProperty("position", "absolute", "important");
-          btn.style.setProperty("top", "8px", "important");
-          btn.style.setProperty("right", "8px", "important");
-          btn.style.setProperty("width", "50px", "important");
-          btn.style.setProperty("height", "50px", "important");
-          btn.style.setProperty("display", "flex", "important");
-          btn.style.setProperty("align-items", "center", "important");
-          btn.style.setProperty("justify-content", "center", "important");
-          btn.style.setProperty("z-index", "99999", "important");
-          btn.style.setProperty("background", "transparent", "important");
-          btn.style.setProperty("padding", "0", "important");
-          btn.style.setProperty("margin", "0", "important");
-          
-          const svg = btn.querySelector("svg");
-          if (svg) {
-            svg.style.setProperty("width", "36px", "important");
-            svg.style.setProperty("height", "36px", "important");
-            svg.style.setProperty("margin", "0", "important");
-            svg.style.setProperty("display", "block", "important");
-            svg.style.setProperty("flex-shrink", "0", "important");
-          }
-        });
-      });
-
       // 2. ARREGLO TEXTAREA: enterKeyHint hace que el teclado móvil muestre "Enviar"
       const chatWin = document.querySelector(".rcb-chat-window");
       const chatInput = chatWin?.querySelector("textarea, input[type='text']");
@@ -245,48 +400,45 @@ const FloatingWidget = () => {
         chatInput.setAttribute("enterkeyhint", "send");
       }
 
-      // 3. ARREGLO BOTÓN ENVIAR
-      const sendBtn = document.querySelector(".rcb-send-button, button[aria-label='Send Message'], [class*='send-button']");
+      // 3. ARREGLO BOTÓN ENVIAR (MÓVIL)
+      // react-chatbotify escucha onMouseDown en el botón de enviar (no onClick).
+      // En escritorio el mousedown nativo llega a React con normalidad.
+      // En móvil, al tocar el botón el navegador desenfoca el textarea (cierra
+      // el teclado) ANTES de disparar el mousedown emulado. Para evitarlo:
+      // - pointerdown/touchstart con preventDefault conservan el foco.
+      // - En touchend despachamos un MouseEvent("mousedown") que sube por el DOM
+      //   hasta los listeners de React (registrados en document.body por el portal)
+      //   y dispara el onMouseDown de react-chatbotify → s() → envía el mensaje.
+      // No se añade listener de 'click' para evitar bucles de recursión.
+      const sendBtn = document.querySelector(".rcb-send-button");
       if (sendBtn && !sendBtn.dataset.netoFixed) {
         sendBtn.dataset.netoFixed = "true";
 
-        // Busca el input dentro del chat-window para evitar coger el elemento equivocado
-        const findInput = () => {
-          const win = document.querySelector(".rcb-chat-window");
-          return win?.querySelector("textarea, input[type='text'], [class*='rcb-chat-input']")
-            || document.querySelector("textarea, input[type='text']");
-        };
-
         let touchPending = false;
 
-        const doSend = () => {
-          const input = findInput();
-          if (!input || !input.value.trim()) return;
-          // Disparamos keydown + keypress por si la librería escucha alguno de los dos
-          const opts = { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true, cancelable: true, composed: true };
-          input.dispatchEvent(new KeyboardEvent("keydown", opts));
-          input.dispatchEvent(new KeyboardEvent("keypress", opts));
-        };
-
-        // Móvil: pointerdown + touchstart con preventDefault evitan que el input
-        // pierda el foco cuando el usuario toca el botón.
-        // touchend dispara el envío manualmente; el click sintético queda suprimido.
         sendBtn.addEventListener("pointerdown", (e) => {
-          if (e.pointerType === "touch") e.preventDefault();
+          if (e.pointerType !== "mouse") e.preventDefault();
         }, { passive: false });
+
         sendBtn.addEventListener("touchstart", (e) => {
           e.preventDefault();
           touchPending = true;
         }, { passive: false });
-        sendBtn.addEventListener("touchend", (e) => {
-          e.preventDefault();
-          if (touchPending) { touchPending = false; doSend(); }
-        }, { passive: false });
 
-        // Escritorio: click normal (no hay touchstart, así que touchPending=false)
-        sendBtn.addEventListener("click", () => {
-          if (!touchPending) doSend();
-        });
+        sendBtn.addEventListener("touchmove", () => {
+          touchPending = false;
+        }, { passive: true });
+
+        sendBtn.addEventListener("touchend", (e) => {
+          if (!touchPending) return;
+          touchPending = false;
+          e.preventDefault();
+          // Despachar mousedown (el evento que react-chatbotify escucha).
+          // Burbujea a document.body donde React registra sus listeners por el portal.
+          sendBtn.dispatchEvent(
+            new MouseEvent("mousedown", { bubbles: true, cancelable: true, button: 0, buttons: 1 })
+          );
+        }, { passive: false });
       }
     };
     
@@ -317,6 +469,18 @@ const FloatingWidget = () => {
     }
   }, []);
 
+  // Cierra el chat visualmente sin depender de los internos de react-chatbotify
+  const handleClose = useCallback(() => setForceClose(true), []);
+
+  // Abre el chat: si estaba forzado cerrado solo lo muestra; si estaba cerrado lo abre vía toggle
+  const handleLaunch = useCallback(() => {
+    if (forceClose) {
+      setForceClose(false);
+    } else {
+      toggleChat();
+    }
+  }, [forceClose, toggleChat]);
+
   // --- CONFIGURACIÓN E INYECCIÓN EN REACT-CHATBOTIFY ---
   const finalSettings = useMemo(() => {
     const isMobile = window.innerWidth < MOBILE_BP;
@@ -328,13 +492,20 @@ const FloatingWidget = () => {
       title: <CustomHeader
         title={wp.headerTitleText}
         avatar={wp.headerAvatar || BOT_AVATAR_URL}
-        headerBg={wp.headerBg}
         headerTitleColor={wp.headerTitleColor}
+        onReset={resetConversation}
+        onClose={handleClose}
+        newConvBg={wp.newConvBg}
+        newConvColor={wp.newConvColor}
+        newConvHoverBg={wp.newConvHoverBg}
+        newConvEnabled={wp.newConvEnabled}
+        newConvTooltip={wp.newConvTooltip}
+        chatSize={wp.chatSize}
       />
     };
 
     return baseSettings;
-  }, [wp]);
+  }, [wp, resetConversation, handleClose]);
 
   const finalStyles = useMemo(() => {
     const isMobile = window.innerWidth < MOBILE_BP;
@@ -457,21 +628,27 @@ const FloatingWidget = () => {
   };
 
   // --- RENDERIZADO PRINCIPAL ---
+  const chatVisible = isChatOpen && !forceClose;
   return createPortal(
-    <div className="fixed inset-0 pointer-events-none" style={{ zIndex: MAX_Z_INDEX }}>
+    <div
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: MAX_Z_INDEX, background: (chatVisible && window.innerWidth < MOBILE_BP) ? "#ffffff" : "transparent" }}
+    >
       <div className="contents pointer-events-auto" style={{
-          "--opt-bg": wp.optionsBtnBg || "#ffffff",               
-          "--opt-color": wp.optionsBtnColor || "#111827",        
-          "--opt-border": wp.optionsBtnBorder || "#ffc600",      
-          
-          "--opt-hover-bg": wp.optionsBtnHoverBg || "#ffc600",   
-          "--opt-hover-color": wp.optionsBtnHoverColor || "#111827" 
+          "--opt-bg": wp.optionsBtnBg || "#ffffff",
+          "--opt-color": wp.optionsBtnColor || "#111827",
+          "--opt-border": wp.optionsBtnBorder || "#ffc600",
+          "--opt-hover-bg": wp.optionsBtnHoverBg || "#ffc600",
+          "--opt-hover-color": wp.optionsBtnHoverColor || "#111827"
       }}>
-        <ChatBot settings={finalSettings} styles={finalStyles} flow={flow} />
+        {/* El ChatBot siempre está montado; se oculta con display:none cuando forceClose=true */}
+        <div style={{ display: forceClose ? "none" : undefined }}>
+          <ChatBot key={chatbotKey} settings={finalSettings} styles={finalStyles} flow={flow} />
+        </div>
 
-        {!isChatOpen && (
+        {(!isChatOpen || forceClose) && (
           <PillLauncher
-            toggleChat={toggleChat}
+            toggleChat={handleLaunch}
             config={launcherConfig}
           />
         )}

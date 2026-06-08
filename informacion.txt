@@ -1,26 +1,14 @@
-# 🛠️ Tarea Frontend Full-Stack: Parche de Seguridad y Nuevas Analíticas (Badge Clicks)
+Revisa de nuevo el código del header del chat. El último cambio ha roto la maquetación y ha duplicado el botón de cerrar.
 
-## 1. Parche de Seguridad Crítico (Borrar Log)
-En nuestro archivo `src/hooks/botLogic.js`, dentro de la función `fetchBotResponse`, dejamos un `console.log` olvidado de la fase de pruebas que está imprimiendo la llave de autenticación en el navegador del cliente. 
+El problema actual: Hay dos iconos de 'X' en la cabecera. Uno blanco que está cortado y se sale por el borde derecho (probablemente con un position: absolute mal calculado), y otro negro que se ha agrupado con la rueda de recargar, pero que no está alineado a la derecha del todo.
 
-**Acción requerida:** 
-Busca y elimina INMEDIATAMENTE la línea exacta que dice: `console.log("LLAVE QUE ENVÍO AL SERVIDOR:", API_KEY);` (o similar) para evitar exponer credenciales.
+Lo que debes hacer paso a paso para solucionarlo:
 
-## 2. Nueva Feature: Tracking de Apertura del Chat
-Ya tenemos implementado un sistema exitoso para medir los clics en el botón de compra (con React enviando datos a nuestro plugin de PHP en WordPress). Ahora queremos medir el primer paso del embudo: **Cuántas veces se hace clic en el badge para abrir el chatbot**.
+Elimina el botón 'X' blanco que está desbordando el contenedor. Quédate únicamente con el botón 'X' negro.
 
-**Requisitos exactos:**
-- **Sin límites ni enfriamiento:** Al igual que el botón de compra, cada vez que se haga clic para abrir el chat, debe contar. No pongas debounce ni cooldown.
-- **Diferenciación de métricas:** La base de datos/opciones de WordPress debe poder diferenciar entre "Clics de Compra" y "Clics de Apertura de Chat".
+Agrupa el botón de la ruedecita y el botón 'X' negro en un único div contenedor (ej. div class="header-actions").
 
-## 3. Tu Misión
-Actúa como Lead Full-Stack Developer. Dame el código exacto para actualizar los siguientes puntos:
+Asegúrate de que el contenedor principal del header usa display: flex;, align-items: center; y justify-content: space-between;. Esto empujará automáticamente el bloque del avatar a la izquierda y el bloque de los botones (rueda + X) a la derecha.
 
-1. **En React (`FloatingWidget.jsx` o donde inicializamos `react-chatbotify`):** 
-   Utiliza el evento adecuado de la librería (por ejemplo, detectar el cambio de estado de minimizado a abierto, o eventos como `onToggle`/`onOpen`) para lanzar la petición `fetch` a nuestro endpoint de WordPress. Asegúrate de enviar un `payload` que identifique esta acción (ej. `{ type: 'badge_open' }`).
-2. **En PHP (Endpoint REST):** 
-   Actualiza la función que recibe el AJAX/Fetch para que acepte este nuevo tipo de métrica y sume +1 al contador de "Aperturas" en la base de datos o en `wp_options`.
-3. **En PHP (Panel de Admin):** 
-   Actualiza la vista del dashboard de WordPress para que, además de las compras, muestre esta nueva estadística de "Chats Abiertos".
-
-Por favor, revisa cómo nombramos el endpoint actual en PHP y muéstrame los fragmentos de código exactos que debo sustituir o añadir en ambos lados (React y PHP).
+Añade un espaciado interior (padding-right o gap) razonable (por ejemplo, 15px) para que la rueda y la 'X' tengan espacio entre ellos, y para que la 'X' no se quede completamente pegada al borde amarillo.
+"

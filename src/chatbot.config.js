@@ -91,6 +91,8 @@ export const buildConfig = (wp = {}) => {
     optionsBtnColor:    wp.optionsBtnColor     || BRAND.textDark,
     optionsBtnBorder:   wp.optionsBtnBorder    || BRAND.yellow,
     optionsBtnHoverBg:  wp.optionsBtnHoverBg   || BRAND.yellow,
+
+    inputPlaceholder:   wp.inputPlaceholder    || "Escribe tu consulta...",
   };
 };
 
@@ -108,7 +110,7 @@ export const buildStyles = (config, isMobile) => {
     headerStyle: {
       background:           config.primary,
       color:                config.headerTitleColor,
-      padding:              "0 16px",
+      padding:              isMobile ? "0 4px 0 12px" : "0 6px 0 16px",
       minHeight:            "84px",
       display:              "flex",
       alignItems:           "center",
@@ -151,12 +153,16 @@ export const buildStyles = (config, isMobile) => {
       color:           config.optionsBtnColor,
       border:          `1px solid ${config.optionsBtnBorder}`,
       borderRadius:    "8px",
-      padding:         "8px 14px",
-      margin:          "4px",
+      padding:         "11px 22px",
+      margin:          "0",
       fontWeight:      "600",
       boxShadow:       "0 1px 3px rgba(0,0,0,0.05)",
       transition:      "all 0.2s ease-in-out",
       cursor:          "pointer",
+      whiteSpace:      "nowrap",
+      width:           "auto",
+      maxWidth:        "none",
+      flexShrink:      0,
     },
     botOptionHoveredStyle: {
       backgroundColor: config.optionsBtnHoverBg,
@@ -238,11 +244,13 @@ export const buildStyles = (config, isMobile) => {
       flexDirection: "column",
       ...(isMobile
         ? {
+            // La altura real con teclado abierto la fija useMobileKeyboardFix.js
+            // (anclaje al visualViewport). 100dvh es el valor base/fallback.
             inset:        0,
             width:        "100vw",
-            height:       "100vh",
+            height:       "100dvh",
             maxWidth:     "100vw",
-            maxHeight:    "100vh",
+            maxHeight:    "100dvh",
             borderRadius: 0,
             overflow:     "hidden",
           }
@@ -284,5 +292,8 @@ export const buildSettings = (config, isMobile) => ({
     showAvatar:    true,
     showTimestamp: false,
     avatar:        config.headerAvatar || BOT_AVATAR_URL,
+  },
+  chatInput: {
+    enabledPlaceholderText: config.inputPlaceholder,
   },
 });
