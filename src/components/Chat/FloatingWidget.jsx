@@ -11,6 +11,7 @@ import {
   buildConfig,
   buildStyles,
   buildSettings,
+  isMobileViewport,
   BOT_AVATAR_URL
 } from "../../chatbot.config";
 import { useBotLogic } from "../../hooks/botLogic";
@@ -246,12 +247,17 @@ const FloatingWidget = () => {
 
   const { handleBotMessage, getPiezas } = useBotLogic();
   useChatDOMInjector(mounted, getPiezas, wp);
-  useMobileKeyboardFix(isChatOpen);
+  useMobileKeyboardFix(isChatOpen && !forceClose);
 
   const { lastSearchRef, isLockedRef, justUnlockedVerRef, setLock } = useBotMemory();
   const sugerenciasRef = useRef([]);
+  // Contador de versión: se incrementa en cada reset para cancelar respuestas en vuelo
+  const searchVersionRef = useRef(0);
 
   const resetConversation = useCallback(() => {
+    // Invalida cualquier respuesta async pendiente del backend
+    searchVersionRef.current += 1;
+
     // Limpia todo el estado persistido
     try {
       [STORAGE_KEY, SESSION_KEY, PIEZAS_KEY, CONTEXT_KEY, "NFW_LAST_SEARCH", "NFW_IS_LOCKED"]
@@ -310,7 +316,7 @@ const FloatingWidget = () => {
   useEffect(() => {
     const WRAPPER = "neto-options-wrapper";
     const HINT    = "neto-scroll-hint";
-    const HINT_TXT = "← Desliza horizontalmente para ver todas las opciones →";
+    const HINT_TXT = "← Desplázate para ver todas las opciones →";
 
     const group = () => {
       // Solo .rcb-options que NO estén ya dentro de nuestro wrapper
@@ -342,6 +348,16 @@ const FloatingWidget = () => {
         wrapper.className = WRAPPER;
         els[0].parentNode.insertBefore(wrapper, els[0]);
         els.forEach(el => wrapper.appendChild(el));
+
+        // Rueda vertical del ratón → scroll horizontal (escritorio sin táctil).
+        // Solo intervenimos si realmente hay overflow horizontal; si no, dejamos
+        // que la página haga su scroll vertical normal.
+        wrapper.addEventListener("wheel", (e) => {
+          if (!e.deltaY) return;
+          if (wrapper.scrollWidth <= wrapper.clientWidth) return;
+          e.preventDefault();
+          wrapper.scrollLeft += e.deltaY;
+        }, { passive: false });
 
         // Hint debajo del wrapper
         if (!wrapper.nextElementSibling?.classList.contains(HINT)) {
@@ -377,7 +393,7 @@ const FloatingWidget = () => {
   // Usar solo overflow: hidden y depender del touchmove preventDefault en useMobileKeyboardFix
   // evita que Safari rompa los elementos con position: fixed (como la ventana del chat).
   useEffect(() => {
-    if (window.innerWidth >= MOBILE_BP) return;
+    if (!isMobileViewport()) return;
     if (!isChatOpen) return;
 
     document.documentElement.style.setProperty("overflow", "hidden", "important");
@@ -483,7 +499,7 @@ const FloatingWidget = () => {
 
   // --- CONFIGURACIÓN E INYECCIÓN EN REACT-CHATBOTIFY ---
   const finalSettings = useMemo(() => {
-    const isMobile = window.innerWidth < MOBILE_BP;
+    const isMobile = isMobileViewport();
     const baseSettings = buildSettings(buildConfig(wp), isMobile);
     
     baseSettings.header = {
@@ -508,7 +524,7 @@ const FloatingWidget = () => {
   }, [wp, resetConversation, handleClose]);
 
   const finalStyles = useMemo(() => {
-    const isMobile = window.innerWidth < MOBILE_BP;
+    const isMobile = isMobileViewport();
     const base = buildStyles(buildConfig(wp), isMobile);
     return {
       ...base,
@@ -539,13 +555,17 @@ const FloatingWidget = () => {
   };
 
   const handleFreeSearch = async (txt, params) => {
-    // Limpiamos las sugerencias de la búsqueda anterior al iniciar una nueva.
+    // Capturamos la versión actual antes del await para detectar resets posteriores
+    const myVersion = searchVersionRef.current;
+
     sugerenciasRef.current = [];
 
     const prevSearch = lastSearchRef.current;
     const respuestaBackend = await handleBotMessage(params, wp);
 
-    // Almacenamos temporalmente las sugerencias para renderizarlas como opciones.
+    // Si hubo un reset mientras esperábamos, descartamos la respuesta completamente
+    if (searchVersionRef.current !== myVersion) return null;
+
     sugerenciasRef.current = typeof respuestaBackend === "object" ? (respuestaBackend.sugerencias || []) : [];
 
     const textoRespuesta = typeof respuestaBackend === "string" ? respuestaBackend : respuestaBackend.texto;
@@ -632,7 +652,7 @@ const FloatingWidget = () => {
   return createPortal(
     <div
       className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: MAX_Z_INDEX, background: (chatVisible && window.innerWidth < MOBILE_BP) ? "#ffffff" : "transparent" }}
+      style={{ zIndex: MAX_Z_INDEX, background: (chatVisible && isMobileViewport()) ? "#ffffff" : "transparent" }}
     >
       <div className="contents pointer-events-auto" style={{
           "--opt-bg": wp.optionsBtnBg || "#ffffff",

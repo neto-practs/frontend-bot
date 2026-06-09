@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Floating Widget
  * Description: Agente de búsqueda conversacional clics + whatshApp
- * Version: 4.4.1
+ * Version: 4.4.2
  * Author: Saul
  */
 

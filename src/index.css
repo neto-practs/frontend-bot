@@ -111,8 +111,12 @@
    - Dentro de la ventana (flex column): cabecera e input con flex-shrink:0 para
      que nunca se compriman, y el cuerpo (mensajes) absorbe el espacio y hace
      scroll. Así el input queda siempre pegado al borde inferior visible.
+
+   El segundo selector (pointer: coarse) hace que las tablets táctiles (iPad)
+   también usen el layout de pantalla completa, en sintonía con isMobileViewport()
+   de chatbot.config.js. Un escritorio con ratón (pointer: fine) no entra aquí.
 --------------------------------------------------- */
-@media (max-width: 767px) {
+@media (max-width: 767px), (pointer: coarse) {
   .rcb-chat-window {
     position: fixed !important;
     top: 0 !important;
@@ -151,6 +155,29 @@
   .rcb-chat-window .rcb-chat-input {
     flex-shrink: 0 !important;
     position: relative !important;
+  }
+
+  /* iOS Safari: font-size ≥ 16px para evitar zoom automático al enfocar */
+  .rcb-chat-window textarea,
+  .rcb-chat-window input[type="text"] {
+    font-size: 16px !important;
+    height: 46px !important;
+    max-height: 46px !important;
+    min-height: 46px !important;
+    resize: none !important;
+    overflow: hidden !important;
+  }
+
+  /* Limitar altura del contenedor inferior (input + botón enviar) en móvil */
+  .rcb-chat-window .rcb-chat-input-container,
+  .rcb-chat-window [class*="rcb"][class*="input"][class*="container"] {
+    flex-shrink: 0 !important;
+    max-height: 80px !important;
+  }
+
+  /* Safe area inset para iPhone X+ (notch inferior) */
+  .rcb-chat-window .rcb-chat-input {
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
   }
 }
 
@@ -208,14 +235,38 @@
   overflow-x: auto !important;
   gap: 12px !important;
   align-items: center !important;
-  padding: 10px 16px 6px !important;
+  padding: 10px 16px 8px !important;
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  /* Barra de scroll horizontal visible y fina: imprescindible para que un
+     usuario de escritorio con ratón (sin táctil) pueda navegar las sugerencias.
+     Solo aparece cuando hay overflow real (overflow-x: auto). */
+  scrollbar-width: thin !important;
+  scrollbar-color: #cbd5e1 transparent !important;
 }
-.neto-options-wrapper::-webkit-scrollbar { display: none !important; }
+.neto-options-wrapper::-webkit-scrollbar {
+  height: 8px !important;
+}
+.neto-options-wrapper::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+.neto-options-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 8px !important;
+}
+.neto-options-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8 !important;
+}
+
+/* En dispositivos táctiles ocultamos la barra: el swipe basta y queda más limpio */
+@media (pointer: coarse) {
+  .neto-options-wrapper {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  .neto-options-wrapper::-webkit-scrollbar { display: none !important; }
+}
 
 /* ── Hint de scroll ── */
 .neto-scroll-hint {

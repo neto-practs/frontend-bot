@@ -14,6 +14,24 @@ export const IVA_PERCENT = Number(import.meta.env.VITE_IVA_PERCENT) || 0.21;
 export const MAX_Z_INDEX =
   Number(import.meta.env.VITE_MAX_Z_INDEX) || 2147483647;
 export const MOBILE_BP = Number(import.meta.env.VITE_MOBILE_BP) || 768;
+
+/**
+ * ¿Usamos el layout de pantalla completa? (móvil + tablets táctiles)
+ *
+ * Las tablets como el iPad (ancho >= MOBILE_BP) se tratan como móvil porque el
+ * panel flotante se descuadra con el teclado virtual de iOS. A pantalla completa
+ * el comportamiento (anclar al visualViewport) es el mismo que en iPhone y es
+ * fiable. Se detecta la tablet por puntero táctil primario (pointer: coarse),
+ * de modo que un escritorio con ratón (pointer: fine) conserva el modo flotante.
+ *
+ * Debe mantenerse en sintonía con el media query de index.css:
+ *   @media (max-width: 767px), (pointer: coarse)
+ */
+export const isMobileViewport = () => {
+  if (typeof window === "undefined") return false;
+  if (window.innerWidth < MOBILE_BP) return true;
+  return window.matchMedia?.("(pointer: coarse)").matches ?? false;
+};
 export const FALLBACK_IMAGE =
   import.meta.env.VITE_FALLBACK_IMAGE ||
   "https://via.placeholder.com/150x100?text=Sin+Imagen";
@@ -186,7 +204,8 @@ export const buildStyles = (config, isMobile) => {
       height:          "46px",
       minHeight:       "46px",
       borderRadius:    "23px",
-      fontSize:        "14px",
+      // 16px mínimo en iOS para evitar el zoom automático al enfocar el input
+      fontSize:        "16px",
       paddingLeft:     "18px",
       paddingRight:    "18px",
       flex:            "1",
