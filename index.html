@@ -8,6 +8,27 @@
   </head>
   <body>
     <div id="neto-floating-widget-root"></div>
+
+    <!-- ================================================================
+         DATOS DE PRUEBA LOCAL — no se despliega en WordPress
+         (WordPress inyecta su propio ChatBotConfig desde el PHP)
+         ================================================================ -->
+    <script>
+      window.ChatBotConfig = {
+        backendUrl:       "http://localhost:4000/api/chat",
+        backendApiKey:    "",
+        whatsappNumber:   "34612345678",
+
+        // Datos de contacto (placeholders del bot)
+        telefono:         "961 318 659",
+        email:            "info@desguacesejemplo.com",
+        horario:          "Lun–Vie 9:00–18:00 | Sáb 9:00–14:00",
+        mapsUrl:          "https://maps.google.com/?q=Desguace+Central+Getafe+Madrid",
+        sobreNosotrosUrl: "https://desguacesejemplo.com/sobre-nosotros",
+        bajasUrl:         "https://desguacesejemplo.com/bajas-y-tasaciones",
+      };
+    </script>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

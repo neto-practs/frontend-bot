@@ -11,11 +11,10 @@ const WhatsAppCard = ({ phoneNumber }) => {
       target="_blank"
       rel="noopener noreferrer"
       style={{
-        display: "flex",
+        display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
         gap: "8px",
-        width: "100%",
         backgroundColor: "#25D366",
         color: "#ffffff",
         padding: "10px 14px",

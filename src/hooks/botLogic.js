@@ -69,6 +69,16 @@ export const useBotLogic = () => {
       // 1. Comprobamos el tiempo antes de hacer NADA.
       gestionarSesionChat();
 
+      // Interceptamos la palabra "campa" para enviar directamente el placeholder
+      if (/\bcampa\b/i.test(params.userInput)) {
+        return {
+          texto: "Aquí tienes la información sobre nuestra campa: [[CAMPA]]",
+          llave: null,
+          hasPiezas: false,
+          sugerencias: [],
+        };
+      }
+
       // 2. Leemos la memoria limpia (después de que el limpiador haya pasado la escoba si hacía falta)
       historialPiezas.current = getInitialHistorial();
       contextoRef.current = localStorage.getItem(CONTEXT_KEY) || "";

@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Floating Widget
- * Description: Agente de búsqueda conversacional clics + whatshApp
- * Version: 4.4.2
+ * Description: Agente de búsqueda conversacional Neto
+ * Version: 4.4.3
  * Author: Saul
  */
 
@@ -41,6 +41,41 @@ function nfw_sanitize_settings($input) {
     return $sanitized;
 }
 
+function nfw_contact_section_description() {
+    ?>
+    <div style="background:#f0f6fc;border-left:4px solid #4285F4;padding:14px 18px;margin:10px 0 18px;font-size:13px;line-height:1.7;border-radius:0 4px 4px 0;">
+        <strong style="display:block;margin-bottom:8px;">Ejemplos de valores para cada campo:</strong>
+        <table style="border-collapse:collapse;width:100%;max-width:640px;">
+            <tr>
+                <td style="padding:3px 14px 3px 0;color:#555;white-space:nowrap;font-weight:600;">Teléfono</td>
+                <td><code style="background:#e8f0fe;padding:2px 6px;border-radius:3px;">612 345 678</code></td>
+            </tr>
+            <tr>
+                <td style="padding:3px 14px 3px 0;color:#555;font-weight:600;">Email</td>
+                <td><code style="background:#e8f0fe;padding:2px 6px;border-radius:3px;">info@desguacesejemplo.com</code></td>
+            </tr>
+            <tr>
+                <td style="padding:3px 14px 3px 0;color:#555;font-weight:600;">Google Maps</td>
+                <td><code style="background:#e8f0fe;padding:2px 6px;border-radius:3px;">https://maps.google.com/?q=Calle+Ejemplo+12,+Madrid</code></td>
+            </tr>
+            <tr>
+                <td style="padding:3px 14px 3px 0;color:#555;font-weight:600;">Sobre nosotros</td>
+                <td><code style="background:#e8f0fe;padding:2px 6px;border-radius:3px;">https://midominio.com/sobre-nosotros</code></td>
+            </tr>
+            <tr>
+                <td style="padding:3px 14px 3px 0;color:#555;font-weight:600;">Bajas y tasaciones</td>
+                <td><code style="background:#e8f0fe;padding:2px 6px;border-radius:3px;">https://midominio.com/bajas-y-tasaciones</code></td>
+            </tr>
+            <tr>
+                <td style="padding:3px 14px 3px 0;color:#555;font-weight:600;">Horario</td>
+                <td><code style="background:#e8f0fe;padding:2px 6px;border-radius:3px;">Lun&ndash;Vie 9:00&ndash;18:00 | Sáb 9:00&ndash;14:00</code></td>
+            </tr>
+        </table>
+        <p style="margin:10px 0 0;color:#666;font-style:italic;">Deja en blanco los campos que no quieras mostrar. El bot ocultará automáticamente los que no estén configurados.</p>
+    </div>
+    <?php
+}
+
 function nfw_settings_init() {
     try {
         //Evitar Call to undefined function
@@ -60,6 +95,7 @@ function nfw_settings_init() {
         add_settings_section('nfw_section_cards', '6. Tarjetas de Productos', null, 'nfw-config');
         add_settings_section('nfw_section_api', '7. Conexión al Servidor Inteligente', null, 'nfw-config');
         add_settings_section('nfw_section_newconv', '8. Botones de Cabecera (Reiniciar ↺ y Cerrar ✕)', null, 'nfw-config');
+        add_settings_section('nfw_section_contact', '9. Datos de Contacto (Placeholders del bot)', 'nfw_contact_section_description', 'nfw-config');
 
         nfw_add_field('headerBg', 'Color de la Cabecera (Franja superior del chat)', 'color', 'nfw_section_header', '#99c355');
         nfw_add_field('headerTitleColor', 'Color del título en la cabecera', 'color', 'nfw_section_header', '#ffffff');
@@ -112,6 +148,7 @@ function nfw_settings_init() {
 
         nfw_add_field('backendUrl', 'URL del Backend', 'text', 'nfw_section_api', 'https://api.midominio.com/api/chat');
         nfw_add_field('backendApiKey', 'Tu Clave de Acceso (API Key)', 'text', 'nfw_section_api', '');
+        nfw_add_field('whatsappNumber', 'Número de WhatsApp (con prefijo, ej: 34600111222)', 'text', 'nfw_section_api', '');
 
         // Sección 8: Botones de Cabecera (Reiniciar y Cerrar)
         nfw_add_field('newConvEnabled', 'Mostrar botón Reiniciar (↺) en la cabecera', 'select', 'nfw_section_newconv', 'true', array(
@@ -122,7 +159,13 @@ function nfw_settings_init() {
         nfw_add_field('newConvColor', 'Color del icono de los botones ↺ y ✕', 'color', 'nfw_section_newconv', '#ffffff');
         nfw_add_field('newConvHoverBg', 'Color de fondo de los botones ↺ y ✕ (al pasar el ratón)', 'color', 'nfw_section_newconv', 'rgba(0,0,0,0.28)');
         nfw_add_field('newConvTooltip', 'Texto del tooltip del botón ↺ (al pasar el ratón)', 'text', 'nfw_section_newconv', 'Nueva búsqueda');
-        nfw_add_field('whatsappNumber', 'Número de WhatsApp (con prefijo, ej: 34600111222)', 'text', 'nfw_section_api', '');
+
+        nfw_add_field('telefono',         'Teléfono de contacto',                                           'text', 'nfw_section_contact', '');
+        nfw_add_field('email',            'Email de contacto',                                              'text', 'nfw_section_contact', '');
+        nfw_add_field('mapsUrl',          'URL de Google Maps',                                             'text', 'nfw_section_contact', '');
+        nfw_add_field('sobreNosotrosUrl', 'URL página "Sobre Nosotros"',                                    'text', 'nfw_section_contact', '');
+        nfw_add_field('bajasUrl',         'URL página "Bajas y Tasaciones"',                                'text', 'nfw_section_contact', '');
+        nfw_add_field('horario',          'Horario de atención',                                            'text', 'nfw_section_contact', '');
 
     } catch (\Throwable $e) {
         //Atrapa errores 
@@ -315,6 +358,13 @@ function nfw_load_files() {
                 'newConvColor'     => nfw_get_val($options, 'newConvColor', '#555555'),
                 'newConvHoverBg'   => nfw_get_val($options, 'newConvHoverBg', '#f0f0f0'),
                 'newConvTooltip'   => nfw_get_val($options, 'newConvTooltip', 'Borrar conversación y empezar de nuevo'),
+                'telefono'         => nfw_get_val($options, 'telefono', ''),
+                'email'            => nfw_get_val($options, 'email', ''),
+                'mapsUrl'          => nfw_get_val($options, 'mapsUrl', ''),
+                'sobreNosotrosUrl' => nfw_get_val($options, 'sobreNosotrosUrl', ''),
+                'bajasUrl'         => nfw_get_val($options, 'bajasUrl', ''),
+                'campaUrl'         => nfw_get_val($options, 'campaUrl', ''),
+                'horario'          => nfw_get_val($options, 'horario', ''),
                 'restUrl'          => rest_url('neto-bot/v1/track-click'),
                 'restNonce'        => wp_create_nonce('wp_rest')
             );
