@@ -110,6 +110,7 @@ export const buildConfig = (wp = {}) => {
     optionsBtnBorder:   wp.optionsBtnBorder    || BRAND.yellow,
     optionsBtnHoverBg:  wp.optionsBtnHoverBg   || BRAND.yellow,
 
+    maxSuggestions:     parseInt(wp.maxSuggestions) || 10,
     inputPlaceholder:   wp.inputPlaceholder    || "Escribe tu consulta...",
   };
 };

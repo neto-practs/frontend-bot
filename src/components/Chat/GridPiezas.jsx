@@ -82,7 +82,10 @@ const GridPiezas = ({ piezas, metadata, wp = {} }) => {
   const textoBase = config.viewMoreBtnText || "Ver las {total} opciones";
   const textoVerMasFinal = textoBase.replace("{total}", metadata?.totalReal || piezas.length);
 
-  const baseUrl = import.meta.env.VITE_SITE_URL || "https://dev4premium.desguacesyrecambios.com";
+  const baseUrl =
+    config.baseUrl ||
+    config.siteURL ||
+    "https://dev4premium.desguacesyrecambios.com";
   const hayMasResultados = metadata && metadata.totalReal > piezas.length;
   const urlWeb = metadata ? `${baseUrl}/recambios/?locale=es&q=${encodeURIComponent(metadata.queryLimpia)}` : "#";
 

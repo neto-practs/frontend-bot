@@ -627,7 +627,8 @@ const FloatingWidget = () => {
           sugerenciasRef.current = []; // Reiniciamos la memoria de sugerencias para el siguiente turno.
 
           // Eliminamos duplicados y restringimos la cantidad máxima de opciones mostradas.
-          const uniqueSugerencias = [...new Set(rawSugerencias)].slice(0, 10);
+          const maxSugg = parseInt(wp.maxSuggestions) || 10;
+          const uniqueSugerencias = [...new Set(rawSugerencias)].slice(0, maxSugg);
           
           return uniqueSugerencias;
         },

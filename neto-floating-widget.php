@@ -140,6 +140,7 @@ function nfw_settings_init() {
 
         nfw_add_field('refineBtnText', 'Texto botón de opciones: "Seguir afinando"', 'text', 'nfw_section_cards', 'Seguir afinando');
         nfw_add_field('viewBtnText', 'Texto botón de opciones: "Ver resultados"', 'text', 'nfw_section_cards', 'Ver resultados');
+        nfw_add_field('maxSuggestions', 'Número máximo de sugerencias (Por defecto: 10)', 'text', 'nfw_section_cards', '10');
         
         nfw_add_field('optionsBtnBg', 'Fondo de las opciones', 'color', 'nfw_section_cards', '#ffffff');
         nfw_add_field('optionsBtnColor', 'Color del texto de opciones', 'color', 'nfw_section_cards', '#333333');
@@ -147,6 +148,7 @@ function nfw_settings_init() {
         nfw_add_field('optionsBtnHoverBg', 'Fondo de opciones al pasar el ratón', 'color', 'nfw_section_cards', '#f3f4f6');
 
         nfw_add_field('backendUrl', 'URL del Backend', 'text', 'nfw_section_api', 'https://api.midominio.com/api/chat');
+        nfw_add_field('baseUrl', 'URL base de la web (para enlaces a /recambios/). Si se deja en blanco usa la URL del propio WordPress', 'text', 'nfw_section_api', '');
         nfw_add_field('backendApiKey', 'Tu Clave de Acceso (API Key)', 'text', 'nfw_section_api', '');
         nfw_add_field('whatsappNumber', 'Número de WhatsApp (con prefijo, ej: 34600111222)', 'text', 'nfw_section_api', '');
 
@@ -344,11 +346,13 @@ function nfw_load_files() {
                 'viewMoreBtnColor' => nfw_get_val($options, 'viewMoreBtnColor', '#99c355'),
                 'refineBtnText'    => nfw_get_val($options, 'refineBtnText', 'Seguir afinando'),
                 'viewBtnText'      => nfw_get_val($options, 'viewBtnText', 'Ver resultados'),
+                'maxSuggestions'   => nfw_get_val($options, 'maxSuggestions', '10'),
                 'optionsBtnBg'     => nfw_get_val($options, 'optionsBtnBg', '#ffffff'),
                 'optionsBtnColor'  => nfw_get_val($options, 'optionsBtnColor', '#333333'),
                 'optionsBtnBorder' => nfw_get_val($options, 'optionsBtnBorder', '#e5e7eb'),
                 'optionsBtnHoverBg'=> nfw_get_val($options, 'optionsBtnHoverBg', '#f3f4f6'),
                 'siteURL'          => site_url(),
+                'baseUrl'          => nfw_get_val($options, 'baseUrl', site_url()),
                 'backendUrl'       => nfw_get_val($options, 'backendUrl', 'http://localhost:4000/api/chat'),
                 'backendApiKey'    => nfw_get_val($options, 'backendApiKey', ''),
                 'whatsappNumber'   => nfw_get_val($options, 'whatsappNumber', ''),
