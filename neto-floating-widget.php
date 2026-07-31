@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Floating Widget
  * Description: Agente de búsqueda conversacional Neto
- * Version: 4.4.3
+ * Version: 4.4.4
  * Author: Saul
  */
 
@@ -147,9 +147,9 @@ function nfw_settings_init() {
         nfw_add_field('optionsBtnBorder', 'Color del borde de opciones', 'color', 'nfw_section_cards', '#e5e7eb');
         nfw_add_field('optionsBtnHoverBg', 'Fondo de opciones al pasar el ratón', 'color', 'nfw_section_cards', '#f3f4f6');
 
-        nfw_add_field('backendUrl', 'URL del Backend', 'text', 'nfw_section_api', 'https://api.midominio.com/api/chat');
+        nfw_add_field('backendUrl', 'URL del Backend', 'text', 'nfw_section_api', 'https://api-chat.desguacesyrecambios.com/api/chat');
         nfw_add_field('baseUrl', 'URL base de la web (para enlaces a /recambios/). Si se deja en blanco usa la URL del propio WordPress', 'text', 'nfw_section_api', '');
-        nfw_add_field('backendApiKey', 'Tu Clave de Acceso (API Key)', 'text', 'nfw_section_api', '');
+        nfw_add_field('backendApiKey', 'Tu Clave de Acceso (API Key)', 'text', 'nfw_section_api', 'desv7a5562');
         nfw_add_field('whatsappNumber', 'Número de WhatsApp (con prefijo, ej: 34600111222)', 'text', 'nfw_section_api', '');
 
         // Sección 8: Botones de Cabecera (Reiniciar y Cerrar)
@@ -353,8 +353,8 @@ function nfw_load_files() {
                 'optionsBtnHoverBg'=> nfw_get_val($options, 'optionsBtnHoverBg', '#f3f4f6'),
                 'siteURL'          => site_url(),
                 'baseUrl'          => nfw_get_val($options, 'baseUrl', site_url()),
-                'backendUrl'       => nfw_get_val($options, 'backendUrl', 'http://localhost:4000/api/chat'),
-                'backendApiKey'    => nfw_get_val($options, 'backendApiKey', ''),
+                'backendUrl'       => nfw_get_val($options, 'backendUrl', 'https://api-chat.desguacesyrecambios.com/api/chat'),
+                'backendApiKey'    => nfw_get_val($options, 'backendApiKey', 'desv7a5562'),
                 'whatsappNumber'   => nfw_get_val($options, 'whatsappNumber', ''),
                 'newConvEnabled'   => nfw_get_val($options, 'newConvEnabled', 'true'),
                 'newConvText'      => nfw_get_val($options, 'newConvText', 'Nueva conversación'),
