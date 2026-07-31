@@ -97,6 +97,7 @@ const PillLauncher = ({ toggleChat, config }) => {
     transition:    "transform 0.3s ease, filter 0.3s ease",
     width:         "fit-content",
     maxWidth:      isMobile ? `calc(100vw - ${isTiny ? "8px" : isSmall ? "12px" : isMedium ? "16px" : "24px"})` : "360px",
+    height:        "fit-content",
   };
 
   // Contenedor relativo para el avatar + punto de estado
